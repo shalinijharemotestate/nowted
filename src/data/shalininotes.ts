@@ -1,4 +1,4 @@
-export type Note = {
+interface Note {
   id: number
   title: string
   date: string
@@ -7,12 +7,14 @@ export type Note = {
   content: string
 }
 
+export type { Note }
+
 export const folders: string[] = ["Personal", "Work", "Travel", "Events", "Finances"]
 
 export const notes: Note[] = [
   {
     id: 1,
-    title: "My Goals for the Next Year",
+    title: "how to become a better programmer",
     date: "1/01/2026",
     folder: "Personal",
     preview: "As the year comes to an end...",
@@ -20,7 +22,7 @@ export const notes: Note[] = [
   },
   {
     id: 2,
-    title: "Reflection on the Month of June",
+    title: "Remember to buy a gift for my birthday",
     date: "08/06/2026",
     folder: "Personal",
     preview: "this is my birthday month",
@@ -28,7 +30,7 @@ export const notes: Note[] = [
   },
   {
     id: 3,
-    title: "Project Proposal",
+    title: "react project roadmap",
     date: "15/11/2026",
     folder: "Work",
     preview: "roadmap for the new project...",

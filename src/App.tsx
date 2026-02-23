@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './components/sidebar'
+import { notes } from './data/shalininotes'
+import { NotesColumn } from './components/Notescolumn'
 
 function App() {
   const [isDark, setIsDark] = useState(true)
@@ -12,7 +14,7 @@ function App() {
       </div>
 
       <div className={`w-[300px] border-r ${isDark ? 'bg-[#1C1C1E] border-gray-700' : 'bg-gray-100 border-gray-300'}`}>
-        Notes List
+        <NotesColumn notes={notes} isDark={isDark} />
       </div>
 
       <div className={`flex-1 ${isDark ? 'bg-[#1C1C1E]' : 'bg-white'}`}>
