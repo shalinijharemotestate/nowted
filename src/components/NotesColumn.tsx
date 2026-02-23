@@ -1,12 +1,14 @@
 import type { Note } from '../data/shalininotes'
 import { FileText } from 'lucide-react'
 
-type NotesColumnProps = {
+type Props = {
   notes: Note[]
   isDark: boolean
+  onSelectNote: (note: Note) => void
 }
 
-export const NotesColumn = ({ notes, isDark }: NotesColumnProps) => {
+export const NotesColumn = ({ notes, isDark, onSelectNote }: Props) => {
+
   return (
     <div className="flex flex-col h-full">
 
@@ -18,6 +20,7 @@ export const NotesColumn = ({ notes, isDark }: NotesColumnProps) => {
         {notes.map((note) => (
           <div
             key={note.id}
+            onClick={() => onSelectNote(note)}
             className={`flex flex-col gap-1 p-4 border-b cursor-pointer hover:bg-gray-700 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
           >
             <div className="flex items-center gap-2">
@@ -35,4 +38,3 @@ export const NotesColumn = ({ notes, isDark }: NotesColumnProps) => {
     </div>
   )
 }
-
