@@ -12,7 +12,7 @@ export const NotesColumn = ({ notes, isDark, onSelectNote }: Props) => {
   return (
     <div className="flex flex-col h-full">
 
-      <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
+      <div className={`p-5 border-b ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
         <h2 className="text-lg font-semibold">Personal</h2>
       </div>
 
@@ -21,15 +21,15 @@ export const NotesColumn = ({ notes, isDark, onSelectNote }: Props) => {
           <div
             key={note.id}
             onClick={() => onSelectNote(note)}
-            className={`flex flex-col gap-1 p-4 border-b cursor-pointer hover:bg-gray-700 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+            className={`flex flex-col gap-1 p-5 border-b cursor-pointer hover:bg-gray-700 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
           >
             <div className="flex items-center gap-2">
               <FileText size={14} className="text-brand" />
-              <span className="text-sm font-medium truncate">{note.title}</span>
+              <span className="text-sm font-medium ">{note.title}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-brand">{note.date}</span>
-              <span className="text-xs text-gray-500 truncate">{note.preview}</span>
+              <span className="text-xs text-gray-500 ">{note.preview}</span>
             </div>
           </div>
         ))}

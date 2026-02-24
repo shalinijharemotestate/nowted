@@ -14,7 +14,7 @@ export const folders: string[] = ["Personal", "Work", "Travel", "Events", "Finan
 export const notes: Note[] = [
   {
     id: 1,
-    title: "how to become a better programmer",
+    title: "how to become a better ",
     date: "1/01/2026",
     folder: "Personal",
     preview: "As the year comes to an end...",
