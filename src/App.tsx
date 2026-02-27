@@ -18,16 +18,15 @@ function App() {
 
       <div className="flex-1 flex">
         <Routes>
-<Route path="/" element={
-  <div className="flex flex-1 items-center justify-center text-gray-500">
-    Select a folder to get started
-  </div>
-} />
-        <Route path="/folder/:folderId" element={<FolderPage isDark={isDark} />} />
-<Route path="/folder/:folderId/:noteId" element={<FolderPage isDark={isDark} />} />
+          <Route path="/" element={<Navigate to="/folder/Personal" />} />
+          <Route path="/folder/:folderId" element={<FolderPage isDark={isDark} />} />
+          <Route path="/folder/:folderId/:noteId" element={<FolderPage isDark={isDark} />} />
           <Route path="/trash" element={<TrashPage isDark={isDark} />} />
+          <Route path="/trash/:noteId" element={<TrashPage isDark={isDark} />} />
           <Route path="/favorites" element={<FavoritesPage isDark={isDark} />} />
-          <Route path="/archive" element={<ArchivePage isDark={isDark} />} />
+          <Route path="/favorites/:noteId" element={<FavoritesPage isDark={isDark} />} />
+          <Route path="/archived" element={<ArchivePage isDark={isDark} />} />
+          <Route path="/archived/:noteId" element={<ArchivePage isDark={isDark} />} />
         </Routes>
       </div>
 

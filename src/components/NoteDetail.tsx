@@ -1,56 +1,119 @@
-type Note = {
-  id: string
-  title: string
-  preview: string
-  createdAt: string
-  folderId: string
-  isFavorite: boolean
-  isArchived: boolean
-  deletedAt: string | null
-}
+import { useState, useEffect, useRef } from 'react'
+import { MoreHorizontal } from 'lucide-react'
+import api from '../api/NotesApi'
 
 type Props = {
-  note: Note
+  note: any
   darkMode: boolean
 }
 
 function NoteDetail(props: Props) {
 
-  const note = props.note
-  const darkMode = props.darkMode
+  const { note, darkMode } = props
 
-  let dividerColor = 'border-gray-200'
+  const [title, setTitle] = useState(note.title)
+  const [content, setContent] = useState(note.preview)
+  const [showMenu, setShowMenu] = useState(false)
 
-  if (darkMode === true) {
-    dividerColor = 'border-gray-700'
+  const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setTitle(note.title)
+    setContent(note.preview)
+  }, [note])
+
+  function saveNote(updated: { title?: string, preview?: string }) {
+    api.patch(`/notes/${note.id}`, updated)
+  }
+
+  function handleTitleChange(value: string) {
+    setTitle(value)
+    if (titleTimer.current) clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(function() {
+      saveNote({ title: value })
+    }, 5000)
+  }
+
+  function handleContentChange(value: string) {
+    setContent(value)
+    if (contentTimer.current) clearTimeout(contentTimer.current)
+    contentTimer.current = setTimeout(function() {
+      saveNote({ preview: value })
+    }, 5000)
+  }
+
+  function addToFavorite() {
+    api.patch(`/notes/${note.id}`, { isFavorite: true })
+    setShowMenu(false)
+  }
+
+  function addToArchive() {
+    api.patch(`/notes/${note.id}`, { isArchived: true })
+    setShowMenu(false)
+  }
+
+  function deleteNote() {
+    api.delete(`/notes/${note.id}`)
+    setShowMenu(false)
   }
 
   return (
-    <div className="p-8 h-full overflow-y-auto">
+    <div className="p-8 h-full overflow-y-auto relative">
 
-      <h1 className="text-2xl font-bold mb-6">
-        {note.title}
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <input
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          className="text-2xl font-bold bg-transparent outline-none w-full"
+        />
+
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1 rounded hover:bg-gray-700"
+          >
+            <MoreHorizontal size={20} className="text-gray-400" />
+          </button>
+
+          {showMenu && (
+            <div className={`absolute right-0 top-8 w-40 rounded shadow-lg z-10 ${darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
+              <div
+                onClick={addToFavorite}
+                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
+              >
+                Add to Favorites
+              </div>
+              <div
+                onClick={addToArchive}
+                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700"
+              >
+                Archive Note
+              </div>
+              <div
+                onClick={deleteNote}
+                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 text-red-400 rounded-b"
+              >
+                Delete Note
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="mb-4">
         <span className="text-brand text-sm">Date: </span>
-        <span className="text-sm">
-          {note.createdAt}
-        </span>
+        <span className="text-sm">{note.createdAt}</span>
       </div>
 
-      <div className="mb-6">
-        <span className="text-brand text-sm">Folder: </span>
-        <span className="text-sm">
-          {note.folderId}
-        </span>
-      </div>
+      <hr className={`mb-6 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`} />
 
-      <hr className={`mb-6 ${dividerColor}`} />
-
-      <p className="text-sm leading-7">
-        {note.preview}
-      </p>
+      <textarea
+        value={content}
+        onChange={(e) => handleContentChange(e.target.value)}
+        className="w-full min-h-[400px] bg-transparent outline-none resize-none text-sm leading-7"
+        placeholder="Start typing..."
+      />
 
     </div>
   )
