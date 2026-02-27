@@ -1,5 +1,15 @@
-import type { Note } from '../data/shalininotes'
 import { FileText } from 'lucide-react'
+
+type Note = {
+  id: string
+  title: string
+  preview: string
+  createdAt: string
+  folderId: string
+  isFavorite: boolean
+  isArchived: boolean
+  deletedAt: string | null
+}
 
 type Props = {
   notes: Note[]
@@ -25,11 +35,11 @@ export const NotesColumn = ({ notes, isDark, onSelectNote }: Props) => {
           >
             <div className="flex items-center gap-2">
               <FileText size={14} className="text-brand" />
-              <span className="text-sm font-medium ">{note.title}</span>
+              <span className="text-sm font-medium">{note.title}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-brand">{note.date}</span>
-              <span className="text-xs text-gray-500 ">{note.preview}</span>
+              <span className="text-xs text-brand">{note.createdAt}</span>
+              <span className="text-xs text-gray-500">{note.preview}</span>
             </div>
           </div>
         ))}

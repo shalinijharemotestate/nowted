@@ -1,4 +1,13 @@
-import type { Note } from '../data/shalininotes'
+type Note = {
+  id: string
+  title: string
+  preview: string
+  createdAt: string
+  folderId: string
+  isFavorite: boolean
+  isArchived: boolean
+  deletedAt: string | null
+}
 
 type Props = {
   note: Note
@@ -26,21 +35,21 @@ function NoteDetail(props: Props) {
       <div className="mb-4">
         <span className="text-brand text-sm">Date: </span>
         <span className="text-sm">
-          {note.date}
+          {note.createdAt}
         </span>
       </div>
 
       <div className="mb-6">
         <span className="text-brand text-sm">Folder: </span>
         <span className="text-sm">
-          {note.folder}
+          {note.folderId}
         </span>
       </div>
 
       <hr className={`mb-6 ${dividerColor}`} />
 
       <p className="text-sm leading-7">
-        {note.content}
+        {note.preview}
       </p>
 
     </div>
