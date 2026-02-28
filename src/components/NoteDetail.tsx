@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
 import api from '../api/NotesApi'
+import ConfirmPopup from './ConfirmPopup'
 
 type Props = {
   note: any
@@ -10,52 +12,57 @@ type Props = {
 function NoteDetail(props: Props) {
 
   const { note, darkMode } = props
+  const navigate = useNavigate()
 
   const [title, setTitle] = useState(note.title)
-  const [content, setContent] = useState(note.preview)
+  const [content, setContent] = useState(note.content)
   const [showMenu, setShowMenu] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setTitle(note.title)
-    setContent(note.preview)
+    setContent(note.content)
   }, [note])
-
-  function saveNote(updated: { title?: string, preview?: string }) {
-    api.patch(`/notes/${note.id}`, updated)
-  }
 
   function handleTitleChange(value: string) {
     setTitle(value)
     if (titleTimer.current) clearTimeout(titleTimer.current)
     titleTimer.current = setTimeout(function() {
-      saveNote({ title: value })
-    }, 5000)
+      api.patch(`/notes/${note.id}`, { title: value })
+    }, 2000)
   }
 
   function handleContentChange(value: string) {
     setContent(value)
     if (contentTimer.current) clearTimeout(contentTimer.current)
     contentTimer.current = setTimeout(function() {
-      saveNote({ preview: value })
-    }, 5000)
+      api.patch(`/notes/${note.id}`, { content: value })
+    }, 2000)
   }
 
   function addToFavorite() {
-    api.patch(`/notes/${note.id}`, { isFavorite: true })
-    setShowMenu(false)
+    api.patch(`/notes/${note.id}`, { isFavorite: true }).then(function() {
+      setShowMenu(false)
+      navigate('/favorites')
+    })
   }
 
   function addToArchive() {
-    api.patch(`/notes/${note.id}`, { isArchived: true })
-    setShowMenu(false)
+    api.patch(`/notes/${note.id}`, { isArchived: true }).then(function() {
+      setShowMenu(false)
+      navigate('/archived')
+    })
   }
 
-  function deleteNote() {
-    api.delete(`/notes/${note.id}`)
-    setShowMenu(false)
+  function confirmDelete() {
+    api.delete(`/notes/${note.id}`).then(function() {
+      setShowDeleteConfirm(false)
+      setShowMenu(false)
+      navigate('/trash')
+    })
   }
 
   return (
@@ -77,21 +84,24 @@ function NoteDetail(props: Props) {
           </button>
 
           {showMenu && (
-            <div className={`absolute right-0 top-8 w-40 rounded shadow-lg z-10 ${darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
+            <div className={`absolute right-0 top-8 w-44 rounded shadow-lg z-10 ${darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
               <div
                 onClick={addToFavorite}
                 className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
               >
-                Add to Favorites
+                 Add to Favorites
               </div>
               <div
                 onClick={addToArchive}
                 className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700"
               >
-                Archive Note
+                 Archive Note
               </div>
               <div
-                onClick={deleteNote}
+                onClick={() => {
+                  setShowDeleteConfirm(true)
+                  setShowMenu(false)
+                }}
                 className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 text-red-400 rounded-b"
               >
                 Delete Note
@@ -109,11 +119,19 @@ function NoteDetail(props: Props) {
       <hr className={`mb-6 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`} />
 
       <textarea
-        value={content}
+        value={content || ''}
         onChange={(e) => handleContentChange(e.target.value)}
         className="w-full min-h-[400px] bg-transparent outline-none resize-none text-sm leading-7"
         placeholder="Start typing..."
       />
+
+      {showDeleteConfirm && (
+        <ConfirmPopup
+          message="This note will be moved to trash."
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
 
     </div>
   )

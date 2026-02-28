@@ -1,21 +1,38 @@
-import type { Note } from '../data/shalininotes'
+import { useState } from 'react'
 import { FileText, Trash2 } from 'lucide-react'
+import ConfirmPopup from './ConfirmPopup'
 import api from '../api/NotesApi'
+
+type Note = {
+  id: string
+  title: string
+  preview: string
+  createdAt: string
+  folderId: string
+  isFavorite: boolean
+  isArchived: boolean
+  deletedAt: string | null
+}
 
 type Props = {
   notes: Note[]
   isDark: boolean
   onSelectNote: (note: Note) => void
-  refreshNotes: () => void   
+  onNoteDeleted?: () => void
 }
 
-export const NotesColumn = ({ notes, isDark, onSelectNote, refreshNotes }: Props) => {
+export const NotesColumn = (props: Props) => {
 
-  function handleDelete(noteId: string) {
-    api.patch(`/notes/${noteId}`, {
-      deletedAt: new Date().toISOString()
-    }).then(() => {
-      refreshNotes()
+  const { notes, isDark, onSelectNote, onNoteDeleted } = props
+
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  function handleDelete() {
+    if (!deleteId) return
+
+    api.delete(`/notes/${deleteId}`).then(function() {
+      setDeleteId(null)
+      if (onNoteDeleted) onNoteDeleted()
     })
   }
 
@@ -23,39 +40,47 @@ export const NotesColumn = ({ notes, isDark, onSelectNote, refreshNotes }: Props
     <div className="flex flex-col h-full">
 
       <div className={`p-5 border-b ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-        <h2 className="text-lg font-semibold">Personal</h2>
+        <h2 className="text-lg font-semibold">Notes</h2>
       </div>
 
       <div className="flex flex-col overflow-y-auto">
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`flex justify-between items-center p-5 border-b cursor-pointer hover:bg-gray-700 
-              ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+            onClick={() => onSelectNote(note)}
+            className={`flex items-center justify-between gap-1 p-5 border-b cursor-pointer hover:bg-gray-700 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
           >
-
-            <div onClick={() => onSelectNote(note)} className="flex flex-col gap-1 flex-1">
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <FileText size={14} className="text-brand" />
-                <span className="text-sm font-medium">{note.title}</span>
+                <FileText size={14} className="text-brand flex-shrink-0" />
+                <span className="text-sm font-medium truncate">{note.title}</span>
               </div>
-
               <div className="flex items-center gap-2">
-                <span className="text-xs text-brand">{note.date}</span>
+                <span className="text-xs text-brand">{note.createdAt}</span>
                 <span className="text-xs text-gray-500 truncate">{note.preview}</span>
               </div>
             </div>
 
-         
-            <Trash2
-              size={14}
-              onClick={() => handleDelete(String(note.id))}
-              className="text-gray-500 hover:text-red-400 cursor-pointer"
-            />
-
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setDeleteId(note.id)
+              }}
+              className="p-1 rounded hover:bg-gray-600 text-gray-500 hover:text-red-400 flex-shrink-0"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         ))}
       </div>
+
+      {deleteId && (
+        <ConfirmPopup
+          message="This note will be moved to trash."
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteId(null)}
+        />
+      )}
 
     </div>
   )
