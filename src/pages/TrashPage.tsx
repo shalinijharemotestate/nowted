@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
-import { Folder } from 'lucide-react'
 
 type Note = {
   id: string
@@ -16,71 +15,50 @@ type Note = {
   deletedAt: string | null
 }
 
-type FolderType = {
-  id: string
-  name: string
-}
-
 type Props = {
   isDark: boolean
 }
 
 function TrashPage(props: Props) {
 
-  const isDark = props.isDark
+  let isDark = props.isDark
   const { noteId } = useParams()
   const navigate = useNavigate()
 
   const [notesList, setNotesList] = useState<Note[]>([])
   const [openNote, setOpenNote] = useState<Note | null>(null)
-  const [deletedFolders, setDeletedFolders] = useState<FolderType[]>([])
 
   useEffect(function() {
-    fetchDeletedNotes()
-    fetchDeletedFolders()
+    loadDeletedNotes()
   }, [])
 
   useEffect(function() {
     if (noteId) {
-      api.get(`/notes/${noteId}`).then(function(response) {
-        setOpenNote(response.data.note)
+      api.get('/notes/' + noteId).then(function(res) {
+        setOpenNote(res.data.note)
       })
     } else {
       setOpenNote(null)
     }
   }, [noteId])
 
-  function fetchDeletedNotes() {
+  function loadDeletedNotes() {
     api.get('/notes', {
       params: { deleted: true }
-    }).then(function(response) {
-      setNotesList(response.data.notes)
-    })
-  }
-
-  function fetchDeletedFolders() {
-    api.get('/folders', {
-      params: { deleted: true }
-    }).then(function(response) {
-      setDeletedFolders(response.data.folders)
+    }).then(function(res) {
+      setNotesList(res.data.notes)
     })
   }
 
   function handleNoteClick(id: string) {
-    navigate(`/trash/${id}`)
+    navigate('/trash/' + id)
   }
 
   function handleRestoreNote(id: string) {
-    api.post(`/notes/${id}/restore`).then(function() {
+    api.post('/notes/' + id + '/restore').then(function() {
       setOpenNote(null)
       navigate('/trash')
-      fetchDeletedNotes()
-    })
-  }
-
-  function handleRestoreFolder(id: string) {
-    api.post(`/folders/${id}/restore`).then(function() {
-      fetchDeletedFolders()
+      loadDeletedNotes()
     })
   }
 
@@ -88,29 +66,6 @@ function TrashPage(props: Props) {
     <div className="flex flex-1">
 
       <div className={`w-[300px] border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-
-        {deletedFolders.length > 0 && (
-          <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-            <p className="text-brand text-sm mb-2">Deleted Folders</p>
-            {deletedFolders.map(function(folder) {
-              return (
-                <div key={folder.id} className="flex items-center justify-between px-2 py-1">
-                  <div className="flex items-center gap-2">
-                    <Folder size={14} className="text-brand" />
-                    <span className="text-sm">{folder.name}</span>
-                  </div>
-                  <button
-                    onClick={() => handleRestoreFolder(folder.id)}
-                    className="text-xs text-pink-300 hover:text-pink-400"
-                  >
-                    Restore
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
         <NotesColumn
           notes={notesList}
           isDark={isDark}
@@ -118,7 +73,6 @@ function TrashPage(props: Props) {
             handleNoteClick(note.id)
           }}
         />
-
       </div>
 
       <div className="flex-1">
