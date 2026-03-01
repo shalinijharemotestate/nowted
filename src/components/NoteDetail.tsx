@@ -11,7 +11,8 @@ type Props = {
 
 function NoteDetail(props: Props) {
 
-  const { note, darkMode } = props
+  let note = props.note
+  let darkMode = props.darkMode
   const navigate = useNavigate()
 
   const [title, setTitle] = useState(note.title)
@@ -22,24 +23,26 @@ function NoteDetail(props: Props) {
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  
+  useEffect(function() {
     setTitle(note.title)
     setContent(note.content)
   }, [note])
 
-  function handleTitleChange(value: string) {
-    setTitle(value)
+  
+  function handleTitleChange(val: string) {
+    setTitle(val)
     if (titleTimer.current) clearTimeout(titleTimer.current)
     titleTimer.current = setTimeout(function() {
-      api.patch(`/notes/${note.id}`, { title: value })
+      api.patch('/notes/' + note.id, { title: val })
     }, 2000)
   }
 
-  function handleContentChange(value: string) {
-    setContent(value)
+  function handleContentChange(val: string) {
+    setContent(val)
     if (contentTimer.current) clearTimeout(contentTimer.current)
     contentTimer.current = setTimeout(function() {
-      api.patch(`/notes/${note.id}`, { content: value })
+      api.patch('/notes/' + note.id, { content: val })
     }, 2000)
   }
 
@@ -58,7 +61,7 @@ function NoteDetail(props: Props) {
   }
 
   function confirmDelete() {
-    api.delete(`/notes/${note.id}`).then(function() {
+    api.delete('/notes/' + note.id).then(function() {
       setShowDeleteConfirm(false)
       setShowMenu(false)
       navigate('/trash')
@@ -75,6 +78,7 @@ function NoteDetail(props: Props) {
           className="text-2xl font-bold bg-transparent outline-none w-full"
         />
 
+    
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
@@ -84,7 +88,7 @@ function NoteDetail(props: Props) {
           </button>
 
           {showMenu && (
-            <div className={`absolute right-0 top-8 w-44 rounded shadow-lg z-10 ${darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
+            <div className={'absolute right-0 top-8 w-44 rounded shadow-lg z-10 ' + (darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200')}>
               <div
                 onClick={addToFavorite}
                 className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
@@ -98,7 +102,7 @@ function NoteDetail(props: Props) {
                  Archive Note
               </div>
               <div
-                onClick={() => {
+                onClick={function() {
                   setShowDeleteConfirm(true)
                   setShowMenu(false)
                 }}
@@ -116,7 +120,7 @@ function NoteDetail(props: Props) {
         <span className="text-sm">{note.createdAt}</span>
       </div>
 
-      <hr className={`mb-6 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+      <hr className={darkMode ? 'border-gray-700 mb-6' : 'border-gray-200 mb-6'} />
 
       <textarea
         value={content || ''}
