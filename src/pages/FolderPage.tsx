@@ -7,10 +7,9 @@ import NoteDetail from '../components/NoteDetail'
 type Note = {
   id: string
   title: string
-  folderId: string
   preview: string
-  content: string
   createdAt: string
+  folderId: string
   isFavorite: boolean
   isArchived: boolean
   deletedAt: string | null
@@ -18,11 +17,14 @@ type Note = {
 
 type Props = {
   isDark: boolean
+  searchQuery: string
 }
 
 function FolderPage(props: Props) {
 
   const isDark = props.isDark
+  const searchQuery = props.searchQuery
+
   const { folderId, noteId } = useParams()
   const navigate = useNavigate()
 
@@ -32,16 +34,19 @@ function FolderPage(props: Props) {
   useEffect(function() {
     if (folderId) {
       api.get('/notes', {
-        params: { folderId: folderId }
+        params: {
+          folderId: folderId,
+          search: searchQuery || undefined
+        }
       }).then(function(response) {
         setNotesList(response.data.notes)
       })
     }
-  }, [folderId])
+  }, [folderId, searchQuery])
 
   useEffect(function() {
     if (noteId) {
-      api.get(`/notes/${noteId}`).then(function(response) {
+      api.get('/notes/' + noteId).then(function(response) {
         setOpenNote(response.data.note)
       })
     } else {
@@ -50,7 +55,19 @@ function FolderPage(props: Props) {
   }, [noteId])
 
   function handleNoteClick(id: string) {
-    navigate(`/folder/${folderId}/${id}`)
+    navigate('/folder/' + folderId + '/' + id)
+  }
+
+  function handleNoteDeleted() {
+    if (folderId) {
+      api.get('/notes', {
+        params: { folderId: folderId }
+      }).then(function(response) {
+        setNotesList(response.data.notes)
+        setOpenNote(null)
+        navigate('/folder/' + folderId)
+      })
+    }
   }
 
   return (
@@ -63,6 +80,7 @@ function FolderPage(props: Props) {
           onSelectNote={function(note) {
             handleNoteClick(note.id)
           }}
+          onNoteDeleted={handleNoteDeleted}
         />
       </div>
 
