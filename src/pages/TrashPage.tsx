@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
-import NoteDetail from '../components/NoteDetail'
+import { RotateCcw } from 'lucide-react'
 
 type Note = {
   id: string
@@ -75,23 +75,28 @@ function TrashPage(props: Props) {
         />
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 flex items-center justify-center h-full">
         {openNote ? (
-          <div className="flex flex-col h-full">
-            <NoteDetail note={openNote} darkMode={isDark} />
-            <div className="p-4 border-t border-gray-700">
-              <button
-                onClick={() => handleRestoreNote(openNote.id)}
-                className="bg-pink-300 hover:bg-pink-400 text-black px-4 py-2 rounded text-sm"
-              >
-                Restore Note
-              </button>
+          <div className="flex flex-col items-center text-center gap-4 max-w-sm px-6">
+            <div className="w-16 h-16 rounded-full border border-pink-500 flex items-center justify-center">
+              <RotateCcw size={28} color="pink" strokeWidth={1.5} />
             </div>
+            <h2 className="text-pink-500 text-xl font-bold">
+              Restore "{openNote.title}"
+            </h2>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Don't want to lose this note? It's not too late! Just click the 'Restore'
+              button and it will be added back to your list. It's that simple.
+            </p>
+            <button
+              onClick={() => handleRestoreNote(openNote.id)}
+              className="bg-pink-600 hover:bg-pink-700 text-white text-sm px-8 py-2 rounded-md transition-colors"
+            >
+              Restore
+            </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Select a note to view
-          </div>
+          <p className="text-gray-500 text-sm">Select a note to restore</p>
         )}
       </div>
 

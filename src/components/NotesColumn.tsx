@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FileText, Trash2 } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
 import api from '../api/NotesApi'
 
@@ -28,6 +29,9 @@ export function NotesColumn(props: Props) {
   let onSelectNote = props.onSelectNote
   let onNoteDeleted = props.onNoteDeleted
 
+  const { noteId: currentNoteId } = useParams()
+  const navigate = useNavigate()
+
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   function handleDelete() {
@@ -48,11 +52,27 @@ export function NotesColumn(props: Props) {
 
       <div className="flex flex-col overflow-y-auto">
         {notes.map(function(note) {
+
+          let activeStyle = ''
+
+          if (currentNoteId === note.id) {
+            activeStyle = isDark 
+              ? 'bg-gray-700 text-white' 
+              : 'bg-gray-300 text-gray-900'
+          }
+
           return (
             <div
               key={note.id}
-              onClick={() => onSelectNote(note)}
-              className={'flex items-center justify-between gap-1 p-5 border-b cursor-pointer hover:bg-gray-700 ' + (isDark ? 'border-gray-700' : 'border-gray-200')}
+              onClick={() => {
+                navigate(`/folder/${note.folderId}/${note.id}`)
+                onSelectNote(note)
+              }}
+              className={
+                'flex items-center justify-between gap-1 p-5 border-b cursor-pointer ' +
+                (isDark ? 'hover:bg-gray-700 bg-gray-800 ' : 'hover:bg-gray-200 bg-white ') +
+                activeStyle
+              }
             >
               <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -61,7 +81,7 @@ export function NotesColumn(props: Props) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-brand">{note.createdAt}</span>
-                  <span className="text-xs text-gray-500 truncate">{note.preview}</span>
+                  <span className="text-xs truncate">{note.preview}</span>
                 </div>
               </div>
 

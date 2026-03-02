@@ -73,17 +73,11 @@ function FavoritesPage(props: Props) {
 
       <div className="flex-1">
         {openNote ? (
-          <div className="flex flex-col h-full">
-            <NoteDetail note={openNote} darkMode={isDark} />
-            <div className="p-4 border-t border-gray-700">
-              <button
-                onClick={() => handleUnfavorite(openNote.id)}
-                className="bg-pink-300 hover:bg-pink-400 text-black px-4 py-2 rounded text-sm"
-              >
-                Remove from Favorites
-              </button>
-            </div>
-          </div>
+          <NoteDetail
+            note={openNote}
+            darkMode={isDark}
+            onUnfavorite={() => handleUnfavorite(openNote.id)}
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Select a note to view

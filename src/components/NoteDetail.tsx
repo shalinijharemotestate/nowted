@@ -7,6 +7,8 @@ import ConfirmPopup from './ConfirmPopup'
 type Props = {
   note: any
   darkMode: boolean
+  onUnfavorite?: () => void
+  onUnarchive?: () => void
 }
 
 function NoteDetail(props: Props) {
@@ -23,13 +25,11 @@ function NoteDetail(props: Props) {
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  
   useEffect(function() {
     setTitle(note.title)
     setContent(note.content)
   }, [note])
 
-  
   function handleTitleChange(val: string) {
     setTitle(val)
     if (titleTimer.current) clearTimeout(titleTimer.current)
@@ -78,7 +78,6 @@ function NoteDetail(props: Props) {
           className="text-2xl font-bold bg-transparent outline-none w-full"
         />
 
-    
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
@@ -89,18 +88,39 @@ function NoteDetail(props: Props) {
 
           {showMenu && (
             <div className={'absolute right-0 top-8 w-44 rounded shadow-lg z-10 ' + (darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200')}>
-              <div
-                onClick={addToFavorite}
-                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
-              >
-                 Add to Favorites
-              </div>
-              <div
-                onClick={addToArchive}
-                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700"
-              >
-                 Archive Note
-              </div>
+
+              {props.onUnfavorite ? (
+                <div
+                  onClick={function() { setShowMenu(false); props.onUnfavorite!() }}
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
+                >
+                  Remove from Favorites
+                </div>
+              ) : (
+                <div
+                  onClick={addToFavorite}
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700 rounded-t"
+                >
+                  Add to Favorites
+                </div>
+              )}
+
+              {props.onUnarchive ? (
+                <div
+                  onClick={function() { setShowMenu(false); props.onUnarchive!() }}
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700"
+                >
+                  Unarchive Note
+                </div>
+              ) : (
+                <div
+                  onClick={addToArchive}
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-700"
+                >
+                  Archive Note
+                </div>
+              )}
+
               <div
                 onClick={function() {
                   setShowDeleteConfirm(true)
