@@ -136,7 +136,7 @@ function Sidebar(props: SidebarProps) {
       </div>
 
       {showSearch && (
-        <div className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1 mb-4">
+        <div className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1 mb-4">
           <Search size={14} className="text-gray-400 flex-shrink-0" />
           <input
             value={searchQuery}
@@ -144,7 +144,7 @@ function Sidebar(props: SidebarProps) {
               setSearchQuery(e.target.value)
             }}
             placeholder="Search notes..."
-            className="w-10 bg-transparent text-sm text-white outline-none flex-1 placeholder-gray-500"
+            className="w-10 bg-transparent text-sm text-black outline-none flex-1 placeholder-gray-500"
             autoFocus
           />
           <button onClick={closeSearch}>

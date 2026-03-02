@@ -50,6 +50,14 @@ function FavoritesPage(props: Props) {
     navigate(`/favorites/${id}`)
   }
 
+  function handleUnfavorite(id: string) {
+    api.patch(`/notes/${id}`, { isFavorite: false }).then(function() {
+      setNotesList(notesList.filter(note => note.id !== id))
+      setOpenNote(null)
+      navigate('/favorites')
+    })
+  }
+
   return (
     <div className="flex flex-1">
 
@@ -65,7 +73,17 @@ function FavoritesPage(props: Props) {
 
       <div className="flex-1">
         {openNote ? (
-          <NoteDetail note={openNote} darkMode={isDark} />
+          <div className="flex flex-col h-full">
+            <NoteDetail note={openNote} darkMode={isDark} />
+            <div className="p-4 border-t border-gray-700">
+              <button
+                onClick={() => handleUnfavorite(openNote.id)}
+                className="bg-pink-300 hover:bg-pink-400 text-black px-4 py-2 rounded text-sm"
+              >
+                Remove from Favorites
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Select a note to view

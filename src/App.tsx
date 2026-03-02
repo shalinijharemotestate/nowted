@@ -19,7 +19,7 @@ function App() {
 
       <div className="flex-1 flex">
         <Routes>
-          <Route path="/" element={<Navigate to="/folder/Personal" />} />
+          <Route path="/" element={<Navigate to="/folder" />} />
           <Route path="/folder/:folderId" element={<FolderPage isDark={isDark} searchQuery={searchQuery} />} />
           <Route path="/folder/:folderId/:noteId" element={<FolderPage isDark={isDark} searchQuery={searchQuery} />} />
           <Route path="/trash" element={<TrashPage isDark={isDark} />} />
