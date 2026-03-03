@@ -39,7 +39,14 @@ export function NotesColumn(props: Props) {
                 <h2 className="text-lg font-semibold">{props.heading || 'Notes'}</h2>
             </div>
 
-            <div className="flex flex-col overflow-y-auto">
+          <div
+                className="flex-1 overflow-y-auto mb-4 pr-1 
+        [&::-webkit-scrollbar]:w-1 
+        [&::-webkit-scrollbar-track]:bg-transparent 
+        [&::-webkit-scrollbar-thumb]:bg-gray-300 
+        dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 
+        [&::-webkit-scrollbar-thumb]:rounded-full"
+            >
                 {notes.map(function (note) {
                     let isActive = currentNoteId === note.id
 
