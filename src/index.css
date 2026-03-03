@@ -1,7 +1,5 @@
-
 @import "tailwindcss";
 
-@theme {
-  --color-brand: #D42E70;
-
+:root {
+    --color-brand: #d42e70;
 }

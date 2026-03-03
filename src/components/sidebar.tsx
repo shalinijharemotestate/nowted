@@ -4,368 +4,284 @@ import api from '../api/NotesApi'
 import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Search, X, Trash } from 'lucide-react'
 import logo from '../assets/main-logo.svg'
 import ConfirmPopup from './ConfirmPopup'
+import type { Folder as FolderType, Note } from '../types'
 
 type SidebarProps = {
-  isDark: boolean
-  setIsDark: (value: boolean) => void
-  searchQuery: string
-  setSearchQuery: (value: string) => void
+    isDark: boolean
+    setIsDark: (val: boolean) => void
+    searchQuery: string
+    setSearchQuery: (val: string) => void
 }
 
-type FolderType = {
-  id: string
-  name: string
-}
+export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
+    const navigate = useNavigate()
+    const location = useLocation()
 
-function Sidebar(props: SidebarProps) {
+    const [folders, setFolders] = useState<FolderType[]>([])
+    const [recents, setRecents] = useState<Note[]>([])
 
-  let isDark = props.isDark
-  let setIsDark = props.setIsDark
-  let searchQuery = props.searchQuery
-  let setSearchQuery = props.setSearchQuery
+    const [showAddBox, setShowAddBox] = useState(false)
+    const [newFolderName, setNewFolderName] = useState('')
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editingName, setEditingName] = useState('')
+    const [isSearching, setIsSearching] = useState(false)
+    const [localSearch, setLocalSearch] = useState('')
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+    const [hoveredFolder, setHoveredFolder] = useState<string | null>(null)
 
-  const navigate = useNavigate()
-  const location = useLocation()
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const addBoxRef = useRef<HTMLDivElement>(null)
 
-  const pathParts = location.pathname.split('/')
-  const currentPage = pathParts[1]
-  const folderId = currentPage === 'folder' ? pathParts[2] : null
+    const pathParts = location.pathname.split('/')
+    const activeFolderId = pathParts[1] === 'folder' ? pathParts[2] : null
 
-  const [folderList, setFolderList] = useState<FolderType[]>([])
-  const [recentNotes, setRecentNotes] = useState<any[]>([])
-  const [showAddInput, setShowAddInput] = useState(false)
-  const [newFolder, setNewFolder] = useState('')
-  const [hoveredFolder, setHoveredFolder] = useState<string | null>(null)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [inputValue, setInputValue] = useState('')
-
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const addFolderRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(function() {
-    loadFolders()
-    loadRecentNotes()
-  }, [])
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        showAddInput &&
-        addFolderRef.current &&
-        !addFolderRef.current.contains(event.target as Node)
-      ) {
-        setShowAddInput(false)
-        setNewFolder('')
-      }
+    const getData = async () => {
+        try {
+            const folderRes = await api.get('/folders')
+            const recentRes = await api.get('/notes/recent')
+            setFolders(folderRes.data.folders)
+            setRecents(recentRes.data.recentNotes)
+        } catch (err) {
+            console.log('Error fetching sidebar data:', err)
+        }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showAddInput])
+    useEffect(() => {
+        getData()
+    }, [])
 
-  function loadFolders() {
-    api.get('/folders').then(function(res) {
-      setFolderList(res.data.folders)
-    })
-  }
+    useEffect(() => {
+        const closeBox = (e: MouseEvent) => {
+            if (showAddBox && addBoxRef.current && !addBoxRef.current.contains(e.target as Node)) {
+                setShowAddBox(false)
+                setNewFolderName('')
+            }
+        }
+        document.addEventListener('mousedown', closeBox)
+        return () => document.removeEventListener('mousedown', closeBox)
+    }, [showAddBox])
 
-  function loadRecentNotes() {
-    api.get('/notes/recent').then(function(res) {
-      setRecentNotes(res.data.recentNotes)
-    })
-  }
+    const handleSearch = (val: string) => {
+        setLocalSearch(val)
+        if (timerRef.current) clearTimeout(timerRef.current)
 
-  function handleThemeToggle() {
-    setIsDark(!isDark)
-  }
-
-  function goToFolder(id: string) {
-    navigate('/folder/' + id)
-  }
-
-  function isActiveFolder(id: string) {
-    if (location.pathname.includes('/folder/' + id)) {
-      return true
-    }
-    return false
-  }
-
-  function handleNewNote() {
-    if (!folderId) {
-      alert('Please select a folder first!')
-      return
+        timerRef.current = setTimeout(() => {
+            setSearchQuery(val)
+        }, 300)
     }
 
-    let noteData = {
-      folderId: folderId,
-      title: 'New Note',
-      content: '',
-      isFavorite: false,
-      isArchived: false
+    const handleAddFolder = async () => {
+        if (!newFolderName.trim()) return
+        await api.post('/folders', { name: newFolderName })
+        setNewFolderName('')
+        setShowAddBox(false)
+        getData()
     }
 
-    api.post('/notes', noteData).then(function(res) {
-      let createdNote = res.data
-      navigate(`/folder/${folderId}/${createdNote.id}`)
-    })
-  }
-
-  function handleCreateFolder() {
-    if (newFolder.trim() === '') return
-
-    api.post('/folders', { name: newFolder }).then(function() {
-      loadFolders()
-      setNewFolder('')
-      setShowAddInput(false)
-    })
-  }
-
-
-  function saveEdit(id: string) {
-    if (!editValue.trim()) return
-    api.patch('/folders/' + id, { name: editValue }).then(function() {
-      loadFolders()
-      setEditId(null)
-      setHoveredFolder(null)
-    })
-  }
-
-  function handleDeleteFolder() {
-    if (!deleteId) return
-    api.delete('/folders/' + deleteId).then(function() {
-      loadFolders()
-      setDeleteId(null)
-      setHoveredFolder(null)
-      if (folderId === deleteId) navigate('/')
-    })
-  }
-
-  function handleSearchChange(value: string) {
-
-    setInputValue(value)
-
-    if (searchTimer.current) {
-      clearTimeout(searchTimer.current)
+    const handleRename = async (id: string) => {
+        if (!editingName.trim()) return
+        await api.patch(`/folders/${id}`, { name: editingName })
+        setEditingId(null)
+        getData()
     }
 
-    if (value.trim() === '') {
-      setSearchQuery('')
-      return
+    const handleDelete = async () => {
+        if (!deleteTarget) return
+        await api.delete(`/folders/${deleteTarget}`)
+        setDeleteTarget(null)
+        getData()
+        if (activeFolderId === deleteTarget) navigate('/')
     }
 
-    searchTimer.current = setTimeout(function() {
-      setSearchQuery(value)
-    }, 1000)
-  }
+    return (
+        <div
+            className={`flex flex-col h-screen p-4 border-r transition-all ${isDark ? 'bg-[#1C1C1E] text-white border-zinc-800' : 'bg-gray-50 text-gray-900 border-gray-200'}`}
+        >
+            <div className="flex-none">
+                <div className="flex items-center justify-between mb-6">
+                    <img src={logo} alt="nowted" className={`w-24 ${isDark ? '' : 'invert'}`} />
+                    <button onClick={() => setIsSearching(!isSearching)} className="hover:opacity-60">
+                        <Search size={18} />
+                    </button>
+                </div>
 
-  function closeSearch() {
-    setShowSearch(false)
-    setSearchQuery('')
-    setInputValue('')
-  }
-
-  return (
-    <div className={`flex flex-col h-full p-4 overflow-y-auto ${isDark ? 'bg-[#1C1C1E] text-white' : 'bg-gray-100 text-gray-900'}`}>
-
-      <div className="flex items-center justify-between mb-6">
-       <img 
-          src={logo} 
-          alt="Nowted" 
-          className="w-24 invert dark:invert-0" 
-        />
-        <button onClick={() => setShowSearch(!showSearch)}>
-          <Search size={16} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} />
-        </button>
-      </div>
-
-      {showSearch && (
-        <div className={`flex items-center gap-2 rounded px-2 py-1 mb-4 ${isDark ? 'bg-gray-800' : 'bg-white border border-gray-300'}`}>
-          <Search size={14} className={isDark ? 'text-gray-400 flex-shrink-0' : 'text-gray-500 flex-shrink-0'} />
-          <input
-            value={inputValue}
-            onChange={function(e) {
-              handleSearchChange(e.target.value)
-            }}
-            placeholder="Search notes..."
-            className={`w-10 bg-transparent text-sm outline-none flex-1 placeholder-gray-500 ${isDark ? 'text-white' : 'text-gray-900'}`}
-            autoFocus
-          />
-          <button onClick={closeSearch}>
-            <X size={14} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} />
-          </button>
-        </div>
-      )}
-
-      <button
-        onClick={handleNewNote}
-        className="flex items-center gap-2 bg-pink-300 hover:bg-pink-400 text-gray rounded-md px-4 py-2 mb-6 w-full text-sm"
-      >
-        <Plus size={14} />
-        <span>New Note</span>
-      </button>
-
-      <div className="mb-6">
-        <p className="text-brand text-sm mb-2">Recents</p>
-        {recentNotes.slice(0, 3).map(function(note) {
-          return (
-            <div
-              key={note.id}
-              onClick={() => navigate('/folder/' + note.folderId + '/' + note.id)}
-              className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-            >
-              <FileText size={16} className="text-brand" />
-              <span className="text-sm truncate">{note.title}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-brand text-sm">Folders</p>
-          <FolderPlus
-            size={16}
-            className="text-brand cursor-pointer hover:text-black"
-            onClick={() => setShowAddInput(true)}
-          />
-        </div>
-
-        {showAddInput && (
-          <div ref={addFolderRef}>
-            <input
-              value={newFolder}
-              onChange={function(e) {
-                setNewFolder(e.target.value)
-              }}
-              onKeyDown={function(e) {
-                if (e.key === 'Enter') handleCreateFolder()
-              }}
-              placeholder="Folder name..."
-              className={`mb-2 px-2 py-1 w-full rounded text-sm outline-none ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900 border border-gray-300'}`}
-              autoFocus
-            />
-          </div>
-        )}
-
-        {folderList.map(function(folder) {
-
-          let activeStyle = ''
-          if (isActiveFolder(folder.id)) {
-            activeStyle = isDark ? 'bg-gray-700 text-white' : 'bg-gray-300 text-gray-900'
-          }
-
-          return (
-            <div
-              key={folder.id}
-              className="relative"
-              onMouseEnter={() => setHoveredFolder(folder.id)}
-              onMouseLeave={() => setHoveredFolder(null)}
-            >
-              <div
-                onClick={function() {
-                  if (editId !== folder.id) goToFolder(folder.id)
-                }}
-                className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} ${activeStyle}`}
-              >
-                <Folder size={16} className="text-brand flex-shrink-0" />
-
-                {editId === folder.id ? (
-                  <input
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveEdit(folder.id)
-                      if (e.key === 'Escape') setEditId(null)
-                    }}
-                    onBlur={() => saveEdit(folder.id)}
-                    className={`px-1 rounded text-sm outline-none w-full ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="text-sm flex-1 truncate">{folder.name}</span>
+                {isSearching && (
+                    <div
+                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 mb-4 ${isDark ? 'bg-zinc-800' : 'bg-white border'}`}
+                    >
+                        <Search size={14} className="text-gray-400" />
+                        <input
+                            value={localSearch}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="bg-transparent text-sm outline-none flex-1"
+                            placeholder="Search notes..."
+                            autoFocus
+                        />
+                        <button
+                            onClick={() => {
+                                setIsSearching(false)
+                                setSearchQuery('')
+                                setLocalSearch('')
+                            }}
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
                 )}
 
-                {hoveredFolder === folder.id && editId !== folder.id && (
-                  <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-                    <button
-                      onClick={function(e) {
-                        e.stopPropagation()
-                        setEditId(folder.id)
-                        setEditValue(folder.name)
-                      }}
-                      className={`p-0.5 rounded ${isDark ? 'hover:bg-gray-600 text-gray-400 hover:text-white' : 'hover:bg-gray-300 text-gray-500 hover:text-gray-900'}`}
-                    >
-                      <Pencil size={13} />
-                    </button>
+                <button
+                    onClick={() =>
+                        activeFolderId
+                            ? api
+                                  .post('/notes', { folderId: activeFolderId, title: 'New Note' })
+                                  .then((res) => navigate(`/folder/${activeFolderId}/${res.data.id}`))
+                            : alert('Select a folder first...')
+                    }
+                    className="w-full flex items-center justify-center gap-2 bg-pink-200 hover:bg-pink-300 text-gray-800 py-2 rounded-md mb-6 text-sm font-medium"
+                >
+                    <Plus size={16} /> New Note
+                </button>
 
-                    <button
-                      onClick={function(e) {
-                        e.stopPropagation()
-                        setDeleteId(folder.id)
-                      }}
-                      className={`p-0.5 rounded ${isDark ? 'hover:bg-gray-600 text-gray-400 hover:text-red-400' : 'hover:bg-gray-300 text-gray-500 hover:text-red-500'}`}
-                    >
-                      <Trash size={13} />
-                    </button>
-                  </div>
-                )}
-              </div>
+                <div className="mb-6">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Recents</p>
+                    <div className="space-y-1">
+                        {recents.slice(0, 3).map((note) => (
+                            <div
+                                key={note.id}
+                                onClick={() => navigate(`/folder/${note.folderId}/${note.id}`)}
+                                className="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                            >
+                                <FileText size={16} className="text-pink-400" />
+                                <span className="text-sm truncate">{note.title}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
-          )
-        })}
-      </div>
 
-      <div>
-        <p className="text-brand text-sm mb-2">More</p>
+            <div
+                className="flex-1 overflow-y-auto mb-4 pr-1 
+        [&::-webkit-scrollbar]:w-1 
+        [&::-webkit-scrollbar-track]:bg-transparent 
+        [&::-webkit-scrollbar-thumb]:bg-gray-300 
+        dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 
+        [&::-webkit-scrollbar-thumb]:rounded-full"
+            >
+                <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Folders</p>
+                    <FolderPlus
+                        size={16}
+                        className="cursor-pointer hover:text-pink-400"
+                        onClick={() => setShowAddBox(true)}
+                    />
+                </div>
 
-        <div
-          onClick={() => navigate('/favorites')}
-          className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-        >
-          <Star size={16} className="text-brand" />
-          <span className="text-sm">Favorites</span>
+                {showAddBox && (
+                    <div ref={addBoxRef} className="mb-2">
+                        <input
+                            className={`w-full p-2 text-sm rounded border outline-none ${isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white'}`}
+                            placeholder="Enter name..."
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddFolder()}
+                            autoFocus
+                        />
+                    </div>
+                )}
+
+                <div className="space-y-0.5">
+                    {folders.map((f) => {
+                        const isActive = activeFolderId === f.id
+                        return (
+                            <div
+                                key={f.id}
+                                onMouseEnter={() => setHoveredFolder(f.id)}
+                                onMouseLeave={() => setHoveredFolder(null)}
+                                className={`group flex items-center gap-2 p-2 rounded cursor-pointer ${isActive ? (isDark ? 'bg-zinc-800 text-pink-400' : 'bg-white shadow-sm text-pink-500') : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                                onClick={() => editingId !== f.id && navigate(`/folder/${f.id}`)}
+                            >
+                                <Folder size={16} className="shrink-0" />
+
+                                {editingId === f.id ? (
+                                    <input
+                                        className="bg-transparent outline-none text-sm w-full"
+                                        value={editingName}
+                                        onChange={(e) => setEditingName(e.target.value)}
+                                        onBlur={() => handleRename(f.id)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleRename(f.id)}
+                                        autoFocus
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                ) : (
+                                    <span className="text-sm truncate flex-1">{f.name}</span>
+                                )}
+
+                                {hoveredFolder === f.id && editingId !== f.id && (
+                                    <div className="flex gap-1">
+                                        <Pencil
+                                            size={13}
+                                            className="hover:text-blue-400"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setEditingId(f.id)
+                                                setEditingName(f.name)
+                                            }}
+                                        />
+                                        <Trash
+                                            size={13}
+                                            className="hover:text-red-400"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setDeleteTarget(f.id)
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
+            <div className={`flex-none pt-4 border-t ${isDark ? 'border-zinc-800' : 'border-gray-200'}`}>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">More</p>
+
+                <div className="space-y-1 text-sm">
+                    <div
+                        onClick={() => navigate('/favorites')}
+                        className={`flex items-center gap-2 p-2 rounded cursor-pointer ${pathParts[1] === 'favorites' ? (isDark ? 'bg-zinc-800 text-pink-400' : 'bg-white shadow-sm text-pink-500') : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    >
+                        <Star size={16} className="text-pink-400" /> <span>Favorites</span>
+                    </div>
+                    <div
+                        onClick={() => navigate('/trash')}
+                        className={`flex items-center gap-2 p-2 rounded cursor-pointer ${pathParts[1] === 'trash' ? (isDark ? 'bg-zinc-800 text-pink-400' : 'bg-white shadow-sm text-pink-500') : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    >
+                        <Trash2 size={16} className="text-pink-400" /> <span>Trash</span>
+                    </div>
+                    <div
+                        onClick={() => navigate('/archived')}
+                        className={`flex items-center gap-2 p-2 rounded cursor-pointer ${pathParts[1] === 'archived' ? (isDark ? 'bg-zinc-800 text-pink-400' : 'bg-white shadow-sm text-pink-500') : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    >
+                        <Archive size={16} className="text-pink-400" /> <span>Archived</span>
+                    </div>
+                </div>
+
+                <button
+                    onClick={() => setIsDark(!isDark)}
+                    className="mt-4 w-full py-2 flex items-center justify-center gap-2 text-xs border rounded hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                >
+                    {isDark ? '☀️ lightmode' : '🌙 darkmode'}
+                </button>
+            </div>
+
+            {deleteTarget && (
+                <ConfirmPopup
+                    message="Delete this folder?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+            )}
         </div>
-
-        <div
-          onClick={() => navigate('/trash')}
-          className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-        >
-          <Trash2 size={16} className="text-brand" />
-          <span className="text-sm">Trash</span>
-        </div>
-
-        <div
-          onClick={() => navigate('/archived')}
-          className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-        >
-          <Archive size={16} className="text-brand" />
-          <span className="text-sm">Archived Notes</span>
-        </div>
-      </div>
-
-      <div className={`mt-auto pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-        <button
-          onClick={handleThemeToggle}
-          className={`flex items-center gap-2 px-2 py-1 rounded w-full text-sm ${isDark ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
-        >
-          <span>{isDark ? '☀️'  : '🌙'}</span>
-        </button>
-      </div>
-
-      {deleteId && (
-        <ConfirmPopup
-          message="This folder will be moved to trash."
-          onConfirm={handleDeleteFolder}
-          onCancel={() => setDeleteId(null)}
-        />
-      )}
-
-    </div>
-  )
+    )
 }
-
-export default Sidebar
