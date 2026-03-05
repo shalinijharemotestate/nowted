@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { Sidebar } from './components/sidebar'
+import Sidebar from './components/Sidebar'
 import FolderPage from './pages/FolderPage'
 import TrashPage from './pages/TrashPage'
 import FavoritesPage from './pages/FavoritesPage'

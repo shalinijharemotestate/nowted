@@ -42,7 +42,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
             setFolders(folderRes.data.folders)
             setRecents(recentRes.data.recentNotes)
         } catch (err) {
-            console.log('Error fetching sidebar data:', err)
+            console.log('Error fetching Sidebar data:', err)
         }
     }
 
@@ -285,3 +285,4 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
         </div>
     )
 }
+export default Sidebar
