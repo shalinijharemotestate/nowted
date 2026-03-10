@@ -21,18 +21,18 @@ function FolderPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
-    const [folderName] = useState('')
-useEffect( () =>{
-    if (folderId) {
-        api.get('/notes', {
-            params: { folderId: folderId },
-        }).then(function (response) {
-            setNotesList(response.data.notes)
-        })
-    }
-}, [folderId, noteId])
+    const [folderName, setFolderName] = useState('')
 
-    useEffect(() =>{
+    useEffect(function () {
+        if (folderId) {
+            api.get('/folders').then(function (res) {
+                let found = res.data.folders.find((f: any) => f.id === folderId)
+                if (found) setFolderName(found.name)
+            })
+        }
+    }, [folderId])
+
+    useEffect(function () {
         if (folderId) {
             api.get('/notes', {
                 params: { folderId: folderId },
@@ -40,11 +40,11 @@ useEffect( () =>{
                 setNotesList(response.data.notes)
             })
         }
-    }, [folderId])
+    }, [folderId, noteId])
 
-    useEffect(() => {
+    useEffect(function () {
         if (noteId) {
-            api.get('/notes/' + noteId).then((response) => {
+            api.get('/notes/' + noteId).then(function (response) {
                 setOpenNote(response.data.note)
             })
         } else {
