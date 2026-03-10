@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import api from '../api/NotesApi'
 import ConfirmPopup from './ConfirmPopup'
 import type { NoteDetail as NoteDetailType } from '../types'
@@ -25,6 +25,8 @@ function NoteDetail(props: Props) {
     const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | null>(null)
     const [isFavorite, setIsFavorite] = useState(note.isFavorite)
     const [isArchived, setIsArchived] = useState(note.isArchived)
+    const [showFolderDrop, setShowFolderDrop] = useState(false)
+    const [folders, setFolders] = useState<{ id: string; name: string }[]>([])
 
     const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -36,6 +38,12 @@ function NoteDetail(props: Props) {
         setIsFavorite(note.isFavorite)
         setIsArchived(note.isArchived)
     }, [note])
+
+    useEffect(function () {
+        api.get('/folders').then(function (res) {
+            setFolders(res.data.folders)
+        })
+    }, [])
 
     function showSaved() {
         setSaveStatus('saved')
@@ -70,32 +78,36 @@ function NoteDetail(props: Props) {
     }
 
     function toggleFavorite() {
-        const newVal = !isFavorite
+        let newVal = !isFavorite
         api.patch('/notes/' + note.id, { isFavorite: newVal }).then(function () {
             setIsFavorite(newVal)
             setShowMenu(false)
-            // if we are on favorites page and removing favorite, tell parent
             if (!newVal && props.onUnfavorite) props.onUnfavorite()
         })
     }
 
     function toggleArchive() {
-        const newVal = !isArchived
+        let newVal = !isArchived
         api.patch('/notes/' + note.id, { isArchived: newVal }).then(function () {
             setIsArchived(newVal)
             setShowMenu(false)
-            // if we are on archive page and unarchiving, tell parent
             if (!newVal && props.onUnarchive) props.onUnarchive()
-            // if archiving from folder page, go back to folder
             if (newVal) navigate('/folder/' + note.folder.id)
         })
     }
 
-    function confirmDelete() {
+    function handleDelete() {
         api.delete('/notes/' + note.id).then(function () {
             setShowDeleteConfirm(false)
             setShowMenu(false)
             navigate('/folder/' + note.folder.id)
+        })
+    }
+
+    function moveToFolder(folderId: string) {
+        api.patch('/notes/' + note.id, { folderId: folderId }).then(function () {
+            setShowFolderDrop(false)
+            navigate('/folder/' + folderId + '/' + note.id)
         })
     }
 
@@ -118,7 +130,6 @@ function NoteDetail(props: Props) {
                             'absolute right-0 top-8 w-44 rounded shadow-lg z-10 ' +
                             (darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200')
                         }>
-                            {/* reads actual note data not props */}
                             <div
                                 onClick={toggleFavorite}
                                 className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400 rounded-t"
@@ -164,9 +175,47 @@ function NoteDetail(props: Props) {
                         })}
                     </span>
                 </div>
-                <div>
+
+                <div className="relative">
                     <span className="text-sm text-gray-400">Folder: </span>
-                    <span className="text-sm">{note.folder.name}</span>
+                    <button
+                        onClick={() => setShowFolderDrop(!showFolderDrop)}
+                        className="inline-flex items-center gap-1 text-sm hover:text-pink-400 transition-all"
+                    >
+                        <span>{note.folder.name}</span>
+                        <ChevronDown size={14} className={`transition-transform ${showFolderDrop ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showFolderDrop && (
+                        <div className={`absolute left-0 top-full mt-1 w-52 z-20 rounded-xl shadow-xl overflow-hidden
+                            ${darkMode ? 'bg-zinc-900 border border-zinc-700' : 'bg-white border border-gray-200'}`}
+                        >
+                            {folders.map(function (f) {
+                                let isCurrent = f.id === note.folder.id
+                                return (
+                                    <div
+                                        key={f.id}
+                                        onClick={function () {
+                                            if (isCurrent) {
+                                                setShowFolderDrop(false)
+                                                return
+                                            }
+                                            moveToFolder(f.id)
+                                        }}
+                                        className={`px-4 py-2.5 text-sm cursor-pointer flex items-center gap-2
+                                            ${isCurrent
+                                                ? darkMode ? 'bg-zinc-700 text-pink-400' : 'bg-pink-50 text-pink-500'
+                                                : darkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        
+                                        <span className="truncate">{f.name}</span>
+                                        {isCurrent && <span className="ml-auto text-xs opacity-60">current</span>}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -184,7 +233,7 @@ function NoteDetail(props: Props) {
             {showDeleteConfirm && (
                 <ConfirmPopup
                     message="This note will be moved to trash."
-                    onConfirm={confirmDelete}
+                    onConfirm={handleDelete}
                     onCancel={() => setShowDeleteConfirm(false)}
                 />
             )}

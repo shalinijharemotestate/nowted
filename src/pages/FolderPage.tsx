@@ -21,16 +21,16 @@ function FolderPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
-    const [folderName, setFolderName] = useState('')
-
-useEffect(function () {
+    const [folderName] = useState('')
+useEffect( () =>{
     if (folderId) {
-        api.get('/folders').then(function (res) {
-            const found = res.data.folders.find((f: any) => f.id === folderId)
-            if (found) setFolderName(found.name)
+        api.get('/notes', {
+            params: { folderId: folderId },
+        }).then(function (response) {
+            setNotesList(response.data.notes)
         })
     }
-}, [folderId])
+}, [folderId, noteId])
 
     useEffect(() =>{
         if (folderId) {
