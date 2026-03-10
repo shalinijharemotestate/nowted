@@ -5,7 +5,7 @@ import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
 
-type Props = {
+type  Props = {
     isDark: boolean
     searchQuery: string
 }

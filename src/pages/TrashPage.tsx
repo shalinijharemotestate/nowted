@@ -59,20 +59,21 @@ function TrashPage(props: Props) {
     return (
         <div className="flex flex-1">
             <div className={`w-75 border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-                <NotesColumn
-                    notes={
-                        searchQuery
-                            ? notesList.filter(function (note) {
-                                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                              })
-                            : notesList
-                    }
-                    isDark={isDark}
-                    heading="Trash"
-                    onSelectNote={function (note) {
-                        handleNoteClick(note.id)
-                    }}
-                />
+             <NotesColumn
+    notes={
+        searchQuery
+            ? notesList.filter(function (note) {
+                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
+              })
+            : notesList
+    }
+    isDark={isDark}
+    heading="Trash"
+    showDelete={false}
+    onSelectNote={function (note) {
+        handleNoteClick(note.id)
+    }}
+/>
             </div>
 
             <div className="flex-1 flex items-center justify-center h-full">
