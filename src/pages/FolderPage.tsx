@@ -21,6 +21,16 @@ function FolderPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
+    const [folderName, setFolderName] = useState('')
+
+useEffect(function () {
+    if (folderId) {
+        api.get('/folders').then(function (res) {
+            const found = res.data.folders.find((f: any) => f.id === folderId)
+            if (found) setFolderName(found.name)
+        })
+    }
+}, [folderId])
 
     useEffect(() =>{
         if (folderId) {
@@ -82,6 +92,7 @@ function FolderPage(props: Props) {
                             : notesList
                     }
                     isDark={isDark}
+                    heading={folderName}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
                         handleNoteClick(note.id)
