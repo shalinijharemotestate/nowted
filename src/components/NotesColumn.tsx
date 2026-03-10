@@ -4,14 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
 import api from '../api/NotesApi'
 import type { Note } from '../types'
-
 type Props = {
     notes: Note[]
     isDark: boolean
     heading?: string
     showDelete?: boolean
     onSelectNote: (note: Note) => void
-    onNoteDeleted?: () => void
+    onNoteDeleted?: (deletedNote: Note) => void  
 }
 
 export function NotesColumn(props: Props) {
@@ -22,15 +21,16 @@ export function NotesColumn(props: Props) {
     let showDelete = props.showDelete ?? true
 
     const { noteId: currentNoteId } = useParams()
-    const navigate = useNavigate()
-
     const [deleteId, setDeleteId] = useState<string | null>(null)
+    const [deletedNote, setDeletedNote] = useState<Note | null>(null)
 
     function handleDelete() {
-        if (!deleteId) return
+        if (!deleteId || !deletedNote) return
+
         api.delete('/notes/' + deleteId).then(function () {
             setDeleteId(null)
-            if (onNoteDeleted) onNoteDeleted()
+            if (onNoteDeleted) onNoteDeleted(deletedNote)  // send full note to parent
+            setDeletedNote(null)
         })
     }
 
@@ -49,22 +49,14 @@ export function NotesColumn(props: Props) {
             >
                 {notes.map(function (note) {
                     let isActive = currentNoteId === note.id
-
                     return (
                         <div
                             key={note.id}
-                            onClick={() => {
-                                navigate(`/folder/${note.folderId}/${note.id}`)
-                                onSelectNote(note)
-                            }}
+                            onClick={() => onSelectNote(note)}
                             className={`flex items-center justify-between gap-2 p-3 rounded-xl cursor-pointer transition-all
                                 ${isActive
-                                    ? isDark
-                                        ? 'bg-zinc-700 text-white'
-                                        : 'bg-pink-100 text-gray-900'
-                                    : isDark
-                                        ? 'bg-zinc-800 hover:bg-zinc-700'
-                                        : 'bg-white hover:bg-gray-100 shadow-sm'
+                                    ? isDark ? 'bg-zinc-700 text-white' : 'bg-pink-100 text-gray-900'
+                                    : isDark ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-white hover:bg-gray-100 shadow-sm'
                                 }`}
                         >
                             <div className="flex flex-col gap-1 flex-1 min-w-0">
@@ -88,6 +80,7 @@ export function NotesColumn(props: Props) {
                                 <button
                                     onClick={function (e) {
                                         e.stopPropagation()
+                                        setDeletedNote(note)
                                         setDeleteId(note.id)
                                     }}
                                     className="p-1 rounded hover:bg-gray-600 text-gray-500 hover:text-red-400 shrink-0"
@@ -102,9 +95,9 @@ export function NotesColumn(props: Props) {
 
             {deleteId && (
                 <ConfirmPopup
-                    message="This note will be moved to trash."
+                    message={`"${deletedNote?.title}" will be moved to trash.`}
                     onConfirm={handleDelete}
-                    onCancel={() => setDeleteId(null)}
+                    onCancel={() => { setDeleteId(null); setDeletedNote(null) }}
                 />
             )}
         </div>

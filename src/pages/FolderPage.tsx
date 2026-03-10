@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
+import RestoreNote from '../components/RestoreNote'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
 
 type Props = {
@@ -19,32 +20,27 @@ function FolderPage(props: Props) {
 
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
+    const [restoringNote, setRestoringNote] = useState<Note | null>(null)
 
-    useEffect(
-        function () {
-            if (folderId) {
-                api.get('/notes', {
-                    params: { folderId: folderId },
-                }).then(function (response) {
-                    setNotesList(response.data.notes)
-                })
-            }
-        },
-        [folderId, noteId],
-    )
+    useEffect(function () {
+        if (folderId) {
+            api.get('/notes', {
+                params: { folderId: folderId },
+            }).then(function (response) {
+                setNotesList(response.data.notes)
+            })
+        }
+    }, [folderId])
 
-    useEffect(
-        function () {
-            if (noteId) {
-                api.get('/notes/' + noteId).then(function (response) {
-                    setOpenNote(response.data.note)
-                })
-            } else {
-                setOpenNote(null)
-            }
-        },
-        [noteId],
-    )
+    useEffect(function () {
+        if (noteId) {
+            api.get('/notes/' + noteId).then(function (response) {
+                setOpenNote(response.data.note)
+            })
+        } else {
+            setOpenNote(null)
+        }
+    }, [noteId])
 
     function handleNoteClick(id: string) {
         navigate('/folder/' + folderId + '/' + id)
@@ -58,16 +54,20 @@ function FolderPage(props: Props) {
         })
     }
 
-    function handleNoteDeleted() {
-        if (folderId) {
-            api.get('/notes', {
-                params: { folderId: folderId },
-            }).then(function (response) {
-                setNotesList(response.data.notes)
-                setOpenNote(null)
-                navigate('/folder/' + folderId)
+    function handleNoteDeleted(deletedNote: Note) {
+        setNotesList(prev => prev.filter(n => n.id !== deletedNote.id))
+        setOpenNote(null)
+        setRestoringNote(deletedNote)
+        navigate('/folder/' + folderId)
+    }
+
+    function handleRestore(id: string) {
+        api.post('/notes/' + id + '/restore').then(function () {
+            setRestoringNote(null)
+            api.get('/notes', { params: { folderId } }).then(function (res) {
+                setNotesList(res.data.notes)
             })
-        }
+        })
     }
 
     return (
@@ -83,6 +83,7 @@ function FolderPage(props: Props) {
                     }
                     isDark={isDark}
                     onSelectNote={function (note) {
+                        setRestoringNote(null)
                         handleNoteClick(note.id)
                     }}
                     onNoteDeleted={handleNoteDeleted}
@@ -90,10 +91,21 @@ function FolderPage(props: Props) {
             </div>
 
             <div className="flex-1">
-                {openNote ? (
-                    <NoteDetail note={openNote} darkMode={isDark} onNoteUpdated={handleNoteUpdated} />
+                {restoringNote ? (
+                    <RestoreNote
+                        noteTitle={restoringNote.title}
+                        onRestore={() => handleRestore(restoringNote.id)}
+                    />
+                ) : openNote ? (
+                    <NoteDetail
+                        note={openNote}
+                        darkMode={isDark}
+                        onNoteUpdated={handleNoteUpdated}
+                    />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">Select a note to view</div>
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        Select a note to view
+                    </div>
                 )}
             </div>
         </div>

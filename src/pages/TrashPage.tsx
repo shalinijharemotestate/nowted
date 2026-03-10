@@ -70,6 +70,7 @@ function TrashPage(props: Props) {
     isDark={isDark}
     heading="Trash"
     showDelete={false}
+      
     onSelectNote={function (note) {
         handleNoteClick(note.id)
     }}

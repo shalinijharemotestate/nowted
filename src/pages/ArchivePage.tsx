@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
+import RestoreNote from '../components/RestoreNote'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
 
-type  Props = {
+type Props = {
     isDark: boolean
     searchQuery: string
 }
@@ -18,30 +19,26 @@ function ArchivePage(props: Props) {
 
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
+    const [restoringNote, setRestoringNote] = useState<Note | null>(null)
 
     useEffect(function () {
-        api.get('/notes', {
-            params: { archived: true },
-        }).then(function (response) {
+        api.get('/notes', { params: { archived: true } }).then(function (response) {
             setNotesList(response.data.notes)
         })
     }, [])
 
-    useEffect(
-        function () {
-            if (noteId) {
-                api.get(`/notes/${noteId}`).then(function (response) {
-                    setOpenNote(response.data.note)
-                })
-            } else {
-                setOpenNote(null)
-            }
-        },
-        [noteId],
-    )
+    useEffect(function () {
+        if (noteId) {
+            api.get('/notes/' + noteId).then(function (response) {
+                setOpenNote(response.data.note)
+            })
+        } else {
+            setOpenNote(null)
+        }
+    }, [noteId])
 
     function handleNoteClick(id: string) {
-        navigate(`/archived/${id}`)
+        navigate('/archived/' + id)
     }
 
     function handleNoteUpdated(id: string, updates: { title?: string; preview?: string }) {
@@ -53,10 +50,26 @@ function ArchivePage(props: Props) {
     }
 
     function handleUnarchive(id: string) {
-        api.patch(`/notes/${id}`, { isArchived: false }).then(function () {
+        api.patch('/notes/' + id, { isArchived: false }).then(function () {
             setNotesList(notesList.filter((note) => note.id !== id))
             setOpenNote(null)
             navigate('/archived')
+        })
+    }
+
+    function handleNoteDeleted(deletedNote: Note) {
+        setNotesList(prev => prev.filter(n => n.id !== deletedNote.id))
+        setOpenNote(null)
+        setRestoringNote(deletedNote)
+        navigate('/archived')
+    }
+
+    function handleRestore(id: string) {
+        api.post('/notes/' + id + '/restore').then(function () {
+            setRestoringNote(null)
+            api.get('/notes', { params: { archived: true } }).then(function (res) {
+                setNotesList(res.data.notes)
+            })
         })
     }
 
@@ -74,13 +87,20 @@ function ArchivePage(props: Props) {
                     isDark={isDark}
                     heading="Archived"
                     onSelectNote={function (note) {
+                        setRestoringNote(null)
                         handleNoteClick(note.id)
                     }}
+                    onNoteDeleted={handleNoteDeleted}
                 />
             </div>
 
             <div className="flex-1">
-                {openNote ? (
+                {restoringNote ? (
+                    <RestoreNote
+                        noteTitle={restoringNote.title}
+                        onRestore={() => handleRestore(restoringNote.id)}
+                    />
+                ) : openNote ? (
                     <NoteDetail
                         note={openNote}
                         darkMode={isDark}
@@ -88,7 +108,9 @@ function ArchivePage(props: Props) {
                         onNoteUpdated={handleNoteUpdated}
                     />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">Select a note to view</div>
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        Select a note to view
+                    </div>
                 )}
             </div>
         </div>
