@@ -21,15 +21,15 @@ function ArchivePage(props: Props) {
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
 
-    useEffect(function () {
-        api.get('/notes', { params: { archived: true } }).then(function (response) {
+    useEffect(() => {
+        api.get('/notes', { params: { archived: true } }).then((response) => {
             setNotesList(response.data.notes)
         })
     }, [])
 
-    useEffect(function () {
+    useEffect(() => {
         if (noteId) {
-            api.get('/notes/' + noteId).then(function (response) {
+            api.get('/notes/' + noteId).then((response) => {
                 setOpenNote(response.data.note)
             })
         } else {

@@ -22,7 +22,7 @@ function FolderPage(props: Props) {
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
 
-    useEffect(function () {
+    useEffect(() =>{
         if (folderId) {
             api.get('/notes', {
                 params: { folderId: folderId },
@@ -32,9 +32,9 @@ function FolderPage(props: Props) {
         }
     }, [folderId])
 
-    useEffect(function () {
+    useEffect(() => {
         if (noteId) {
-            api.get('/notes/' + noteId).then(function (response) {
+            api.get('/notes/' + noteId).then((response) => {
                 setOpenNote(response.data.note)
             })
         } else {

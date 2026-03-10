@@ -23,18 +23,19 @@ function NoteDetail(props: Props) {
     const [showMenu, setShowMenu] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | null>(null)
+    const [isFavorite, setIsFavorite] = useState(note.isFavorite)
+    const [isArchived, setIsArchived] = useState(note.isArchived)
 
     const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const contentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    useEffect(
-        function () {
-            setTitle(note.title)
-            setContent(note.content)
-        },
-        [note],
-    )
+    useEffect(function () {
+        setTitle(note.title)
+        setContent(note.content)
+        setIsFavorite(note.isFavorite)
+        setIsArchived(note.isArchived)
+    }, [note])
 
     function showSaved() {
         setSaveStatus('saved')
@@ -68,25 +69,33 @@ function NoteDetail(props: Props) {
         }, 2000)
     }
 
-    function addToFavorite(folderId: string) {
-        api.patch(`/notes/${note.id}`, { isFavorite: true }).then(function () {
+    function toggleFavorite() {
+        const newVal = !isFavorite
+        api.patch('/notes/' + note.id, { isFavorite: newVal }).then(function () {
+            setIsFavorite(newVal)
             setShowMenu(false)
-            navigate(`/folder/${folderId}`)
+            // if we are on favorites page and removing favorite, tell parent
+            if (!newVal && props.onUnfavorite) props.onUnfavorite()
         })
     }
 
-    function addToArchive(folderId: string) {
-        api.patch(`/notes/${note.id}`, { isArchived: true }).then(function () {
+    function toggleArchive() {
+        const newVal = !isArchived
+        api.patch('/notes/' + note.id, { isArchived: newVal }).then(function () {
+            setIsArchived(newVal)
             setShowMenu(false)
-            navigate(`/folder/${folderId}`)
+            // if we are on archive page and unarchiving, tell parent
+            if (!newVal && props.onUnarchive) props.onUnarchive()
+            // if archiving from folder page, go back to folder
+            if (newVal) navigate('/folder/' + note.folder.id)
         })
     }
 
-    function confirmDelete(folderId: string) {
+    function confirmDelete() {
         api.delete('/notes/' + note.id).then(function () {
             setShowDeleteConfirm(false)
             setShowMenu(false)
-            navigate(`/folder/${folderId}`)
+            navigate('/folder/' + note.folder.id)
         })
     }
 
@@ -105,49 +114,24 @@ function NoteDetail(props: Props) {
                     </button>
 
                     {showMenu && (
-                        <div
-                            className={
-                                'absolute right-0 top-8 w-44 rounded shadow-lg z-10 ' +
-                                (darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200')
-                            }
-                        >
-                            {props.onUnfavorite ? (
-                                <div
-                                    onClick={function () {
-                                        setShowMenu(false)
-                                        props.onUnfavorite!()
-                                    }}
-                                    className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400 rounded-t"
-                                >
-                                    Remove from Favorites
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => addToFavorite(note.folder.id)}
-                                    className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400 rounded-t"
-                                >
-                                    Add to Favorites
-                                </div>
-                            )}
+                        <div className={
+                            'absolute right-0 top-8 w-44 rounded shadow-lg z-10 ' +
+                            (darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200')
+                        }>
+                            {/* reads actual note data not props */}
+                            <div
+                                onClick={toggleFavorite}
+                                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400 rounded-t"
+                            >
+                                {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            </div>
 
-                            {props.onUnarchive ? (
-                                <div
-                                    onClick={function () {
-                                        setShowMenu(false)
-                                        props.onUnarchive!()
-                                    }}
-                                    className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400"
-                                >
-                                    Unarchive Note
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => addToArchive(note.folder.id)}
-                                    className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400"
-                                >
-                                    Archive Note
-                                </div>
-                            )}
+                            <div
+                                onClick={toggleArchive}
+                                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-400"
+                            >
+                                {isArchived ? 'Unarchive Note' : 'Archive Note'}
+                            </div>
 
                             <div
                                 onClick={function () {
@@ -164,12 +148,14 @@ function NoteDetail(props: Props) {
             </div>
 
             {saveStatus && (
-                <p className="text-sm mb-3 text-pink-900">{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</p>
+                <p className="text-sm mb-3 text-pink-400">
+                    {saveStatus === 'saving' ? 'Saving...' : 'Saved ✓'}
+                </p>
             )}
 
             <div className="mb-4 flex flex-col gap-3">
                 <div>
-                    <span className="text-brand text-sm">Date: </span>
+                    <span className="text-sm text-gray-400">Date: </span>
                     <span className="text-sm">
                         {new Date(note.createdAt).toLocaleDateString('en-US', {
                             year: 'numeric',
@@ -179,7 +165,7 @@ function NoteDetail(props: Props) {
                     </span>
                 </div>
                 <div>
-                    <span className="text-brand text-sm">Folder: </span>
+                    <span className="text-sm text-gray-400">Folder: </span>
                     <span className="text-sm">{note.folder.name}</span>
                 </div>
             </div>
@@ -189,14 +175,16 @@ function NoteDetail(props: Props) {
             <textarea
                 value={content || ''}
                 onChange={(e) => handleContentChange(e.target.value)}
-                className={`w-full min-h-100 bg-transparent outline-none resize-none text-sm leading-7 ${darkMode ? 'placeholder-white text-white' : 'placeholder-gray-600 text-gray-900'}`}
+                className={`w-full min-h-96 bg-transparent outline-none resize-none text-sm leading-7 ${
+                    darkMode ? 'placeholder-gray-500 text-white' : 'placeholder-gray-400 text-gray-900'
+                }`}
                 placeholder="Start typing..."
             />
 
             {showDeleteConfirm && (
                 <ConfirmPopup
                     message="This note will be moved to trash."
-                    onConfirm={() => confirmDelete(note.folder.id)}
+                    onConfirm={confirmDelete}
                     onCancel={() => setShowDeleteConfirm(false)}
                 />
             )}

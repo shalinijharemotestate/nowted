@@ -21,13 +21,13 @@ function FavoritesPage(props: Props) {
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
 
-    useEffect(function () {
+    useEffect(() =>{
         api.get('/notes', { params: { favorite: true } }).then(function (response) {
             setNotesList(response.data.notes)
         })
     }, [])
 
-    useEffect(function () {
+    useEffect( () =>{
         if (noteId) {
             api.get('/notes/' + noteId).then(function (response) {
                 setOpenNote(response.data.note)

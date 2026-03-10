@@ -19,12 +19,12 @@ function TrashPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetail | null>(null)
 
-    useEffect(function () {
+    useEffect(() => {
         loadDeletedNotes()
     }, [])
 
     useEffect(
-        function () {
+        () => {
             if (noteId) {
                 api.get('/notes/' + noteId).then(function (res) {
                     setOpenNote(res.data.note)

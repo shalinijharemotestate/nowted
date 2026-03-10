@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FileText, Trash2 } from 'lucide-react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
 import api from '../api/NotesApi'
 import type { Note } from '../types'
@@ -19,6 +19,7 @@ export function NotesColumn(props: Props) {
     let onSelectNote = props.onSelectNote
     let onNoteDeleted = props.onNoteDeleted
     let showDelete = props.showDelete ?? true
+
 
     const { noteId: currentNoteId } = useParams()
     const [deleteId, setDeleteId] = useState<string | null>(null)
