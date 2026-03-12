@@ -4,7 +4,7 @@ const api = axios.create({ baseURL: 'https://nowted-server.remotestate.com' })
 
 export async function getNotesByFolder(folderId: string, page: number = 1) {
     try {
-        const res = await api.get('/notes', { params: { folderId, page, limit: 6 } })
+        const res = await api.get('/notes', { params: { folderId, page, limit: 8 } })
         return { data: res.data.notes, total: res.data.total, error: null }
     } catch (err) {
         return { data: [], total: 0, error: 'Failed to load notes' }
