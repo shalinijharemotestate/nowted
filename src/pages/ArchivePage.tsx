@@ -129,6 +129,7 @@ function ArchivePage(props: Props) {
                         onUnarchive={() => handleUnarchive(openNote.id)}
                         onNoteUpdated={handleNoteUpdated}
                          showFolderMove={false} 
+                        onNoteDeleted={handleNoteDeleted}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">

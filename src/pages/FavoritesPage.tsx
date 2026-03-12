@@ -129,6 +129,7 @@ function FavoritesPage(props: Props) {
                          showFolderMove={false} 
                         onUnfavorite={() => handleUnfavorite(openNote.id)}
                         onNoteUpdated={handleNoteUpdated}
+                        onNoteDeleted={handleNoteDeleted}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
