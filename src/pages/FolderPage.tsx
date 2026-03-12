@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getNotesByFolder, getNoteById, restoreNote } from '../api/NotesApi'
-import { getFolders } from '../api/FolderApi'
+import { getFolders } from '../api/folderApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'

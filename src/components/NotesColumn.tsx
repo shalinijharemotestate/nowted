@@ -31,7 +31,7 @@ export function NotesColumn(props: Props) {
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [deletedNote, setDeletedNote] = useState<Note | null>(null)
 
-    const totalPages = Math.ceil(props.totalNotes / 6)
+   const totalPages = Math.ceil(props.totalNotes / 6)  
 
     function handleDelete() {
         if (!deleteId || !deletedNote) return

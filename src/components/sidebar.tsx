@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import { getFolders, createFolder, renameFolder, deleteFolder } from '../api/FolderApi'
+import { getFolders, createFolder, renameFolder, deleteFolder } from '../api/folderApi'
 import { getRecentNotes, createNote } from '../api/NotesApi'
 import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Search, X, Trash } from 'lucide-react'
 import logo from '../assets/main-logo.svg'

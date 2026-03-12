@@ -5,7 +5,7 @@ import FolderPage from './pages/FolderPage'
 import TrashPage from './pages/TrashPage'
 import FavoritesPage from './pages/FavoritesPage'
 import ArchivedPage from './pages/ArchivePage'
-import { NotFound } from './components/Notfound'
+
 
 function App() {
     const [isDark, setIsDark] = useState(false)
@@ -47,8 +47,8 @@ function App() {
                         path="/archived/:noteId"
                         element={<ArchivedPage isDark={isDark} searchQuery={searchQuery} />}
                     />
-                   
                 </Routes>
+               
             </div>
         </div>
     )

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { updateNote, deleteNote } from '../api/NotesApi'
-import { getFolders } from '../api/FolderApi'
+import { getFolders } from '../api/folderApi'
 import ConfirmPopup from './ConfirmPopup'
 import type { NoteDetail as NoteDetailType } from '../types'
 
