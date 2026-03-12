@@ -4,8 +4,9 @@ import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { updateNote, deleteNote } from '../api/NotesApi'
 import { getFolders } from '../api/folderApi'
 import ConfirmPopup from './ConfirmPopup'
-import { toast } from './toast'
+import { toast } from '../toast/toast'
 import type { NoteDetail as NoteDetailType } from '../types'
+import type { Note } from '../types'
 
 type Props = {
     note: NoteDetailType
@@ -13,11 +14,14 @@ type Props = {
     onUnfavorite?: () => void
     onUnarchive?: () => void
     onNoteUpdated?: (id: string, updates: { title?: string; preview?: string }) => void
+    onNoteDeleted?: (deletedNote: Note) => void
+    showFolderMove?: boolean
 }
 
 function NoteDetail(props: Props) {
     let note = props.note
     let darkMode = props.darkMode
+    const showFolderMove = props.showFolderMove ?? true
     const navigate = useNavigate()
 
     const [title, setTitle] = useState(note.title)
@@ -42,6 +46,7 @@ function NoteDetail(props: Props) {
     }, [note])
 
     useEffect(function () {
+        if (!showFolderMove) return
         getFolders().then(function (res) {
             if (res.error) { toast.error('Failed to load folders'); return }
             setFolders(res.data)
@@ -108,7 +113,12 @@ function NoteDetail(props: Props) {
             if (res.error) { toast.error('Failed to delete note'); return }
             setShowDeleteConfirm(false)
             setShowMenu(false)
-            navigate('/folder/' + note.folder.id)
+            // if parent handles delete (FolderPage), use callback for RestoreNote
+            if (props.onNoteDeleted) {
+                props.onNoteDeleted(note)
+            } else {
+                navigate('/folder/' + note.folder.id)
+            }
         })
     }
 
@@ -185,43 +195,45 @@ function NoteDetail(props: Props) {
                     </span>
                 </div>
 
-                <div className="relative">
-                    <span className="text-sm text-gray-400">Folder: </span>
-                    <button
-                        onClick={() => setShowFolderDrop(!showFolderDrop)}
-                        className="inline-flex items-center gap-1 text-sm hover:text-pink-400 transition-all"
-                    >
-                        <span>{note.folder.name}</span>
-                        <ChevronDown size={14} className={`transition-transform ${showFolderDrop ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {showFolderDrop && (
-                        <div className={`absolute left-0 top-full mt-1 w-52 z-20 rounded-xl shadow-xl overflow-hidden
-                            ${darkMode ? 'bg-zinc-900 border border-zinc-700' : 'bg-white border border-gray-200'}`}
+                {showFolderMove && (
+                    <div className="relative">
+                        <span className="text-sm text-gray-400">Folder: </span>
+                        <button
+                            onClick={() => setShowFolderDrop(!showFolderDrop)}
+                            className="inline-flex items-center gap-1 text-sm hover:text-pink-400 transition-all"
                         >
-                            {folders.map(function (f) {
-                                let isCurrent = f.id === note.folder.id
-                                return (
-                                    <div
-                                        key={f.id}
-                                        onClick={function () {
-                                            if (isCurrent) { setShowFolderDrop(false); return }
-                                            moveToFolder(f.id)
-                                        }}
-                                        className={`px-4 py-2.5 text-sm cursor-pointer flex items-center gap-2
-                                            ${isCurrent
-                                                ? darkMode ? 'bg-zinc-700 text-pink-400' : 'bg-pink-50 text-pink-500'
-                                                : darkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        <span className="truncate">{f.name}</span>
-                                        {isCurrent && <span className="ml-auto text-xs opacity-60">current</span>}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-                </div>
+                            <span>{note.folder.name}</span>
+                            <ChevronDown size={14} className={`transition-transform ${showFolderDrop ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showFolderDrop && (
+                            <div className={`absolute left-0 top-full mt-1 w-52 z-20 rounded-xl shadow-xl overflow-hidden
+                                ${darkMode ? 'bg-zinc-900 border border-zinc-700' : 'bg-white border border-gray-200'}`}
+                            >
+                                {folders.map(function (f) {
+                                    let isCurrent = f.id === note.folder.id
+                                    return (
+                                        <div
+                                            key={f.id}
+                                            onClick={function () {
+                                                if (isCurrent) { setShowFolderDrop(false); return }
+                                                moveToFolder(f.id)
+                                            }}
+                                            className={`px-4 py-2.5 text-sm cursor-pointer flex items-center gap-2
+                                                ${isCurrent
+                                                    ? darkMode ? 'bg-zinc-700 text-pink-400' : 'bg-pink-50 text-pink-500'
+                                                    : darkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <span className="truncate">{f.name}</span>
+                                            {isCurrent && <span className="ml-auto text-xs opacity-60">current</span>}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <hr className={darkMode ? 'border-gray-700 mb-6' : 'border-gray-200 mb-6'} />

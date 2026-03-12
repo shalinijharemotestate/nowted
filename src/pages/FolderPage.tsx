@@ -5,8 +5,8 @@ import { getFolders } from '../api/folderApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
-import { toast } from '../components/toast'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
+import { toast } from '../toast/toast'
 
 type Props = {
     isDark: boolean
@@ -136,6 +136,7 @@ function FolderPage(props: Props) {
                         note={openNote}
                         darkMode={isDark}
                         onNoteUpdated={handleNoteUpdated}
+                        onNoteDeleted={handleNoteDeleted}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">

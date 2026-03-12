@@ -3,8 +3,8 @@ import { FileText, Trash2 } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
 import { deleteNote } from '../api/NotesApi'
-import { toast } from './toast'
 import type { Note } from '../types'
+import { toast } from '../toast/toast'
 
 type Props = {
     notes: Note[]

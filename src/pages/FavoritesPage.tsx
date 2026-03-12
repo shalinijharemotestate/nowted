@@ -4,8 +4,8 @@ import { getFavoriteNotes, getNoteById, updateNote, restoreNote } from '../api/N
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
-import { toast } from '../components/toast'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
+import { toast } from '../toast/toast'
 
 type Props = {
     isDark: boolean
@@ -126,6 +126,7 @@ function FavoritesPage(props: Props) {
                     <NoteDetail
                         note={openNote}
                         darkMode={isDark}
+                         showFolderMove={false} 
                         onUnfavorite={() => handleUnfavorite(openNote.id)}
                         onNoteUpdated={handleNoteUpdated}
                     />

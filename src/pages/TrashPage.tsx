@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getDeletedNotes, getNoteById, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import { RotateCcw } from 'lucide-react'
-import { toast } from '../components/toast'
+import { toast } from '../toast/toast'
 import type { Note, NoteDetail } from '../types'
 
 type Props = {

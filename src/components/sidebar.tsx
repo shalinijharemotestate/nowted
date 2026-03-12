@@ -5,8 +5,9 @@ import { getRecentNotes, createNote } from '../api/NotesApi'
 import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Search, X, Trash } from 'lucide-react'
 import logo from '../assets/main-logo.svg'
 import ConfirmPopup from './ConfirmPopup'
-import { toast } from './toast'
 import type { Folder as FolderType, Note } from '../types'
+import { toast } from '../toast/toast'
+
 
 type SidebarProps = {
     isDark: boolean
