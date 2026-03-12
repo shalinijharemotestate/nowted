@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api/NotesApi'
+import { getNotesByFolder, getNoteById, restoreNote } from '../api/NotesApi'
+import { getFolders } from '../api/FolderApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
@@ -22,35 +23,45 @@ function FolderPage(props: Props) {
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
     const [folderName, setFolderName] = useState('')
+    const [page, setPage] = useState(1)
+    const [totalNotes, setTotalNotes] = useState(0)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    useEffect( () => {
-        if (folderId) {
-            api.get('/folders').then(function (res) {
-                let found = res.data.folders.find((f: any) => f.id === folderId)
-                if (found) setFolderName(found.name)
-            })
-        }
+    useEffect(() => {
+        if (!folderId) return
+        getFolders().then(function (res) {
+            if (res.error) return
+            let found = res.data.find((f: any) => f.id === folderId)
+            if (found) setFolderName(found.name)
+        })
     }, [folderId])
 
-    useEffect( () => {
-        if (folderId) {
-            api.get('/notes', {
-                params: { folderId: folderId },
-            }).then(function (response) {
-                setNotesList(response.data.notes)
-            })
-        }
-    }, [folderId, noteId])
+    useEffect(() => {
+        if (!folderId) return
+        setLoading(true)
+        getNotesByFolder(folderId, page).then(function (res) {
+            setLoading(false)
+            if (res.error) { setError(res.error); return }
+            setNotesList(res.data)
+            setTotalNotes(res.total)
+        })
+    }, [folderId, noteId, page])
 
-    useEffect( () => {
+    useEffect(() => {
         if (noteId) {
-            api.get('/notes/' + noteId).then(function (response) {
-                setOpenNote(response.data.note)
+            getNoteById(noteId).then(function (res) {
+                if (!res.error) setOpenNote(res.data)
             })
         } else {
             setOpenNote(null)
         }
     }, [noteId])
+
+    // reset page when folder changes
+    useEffect(() => {
+        setPage(1)
+    }, [folderId])
 
     function handleNoteClick(id: string) {
         navigate('/folder/' + folderId + '/' + id)
@@ -72,10 +83,14 @@ function FolderPage(props: Props) {
     }
 
     function handleRestore(id: string) {
-        api.post('/notes/' + id + '/restore').then(function () {
+        restoreNote(id).then(function (res) {
+            if (res.error) return
             setRestoringNote(null)
-            api.get('/notes', { params: { folderId } }).then(function (res) {
-                setNotesList(res.data.notes)
+            getNotesByFolder(folderId!, page).then(function (r) {
+                if (!r.error) {
+                    setNotesList(r.data)
+                    setTotalNotes(r.total)
+                }
             })
         })
     }
@@ -93,6 +108,11 @@ function FolderPage(props: Props) {
                     }
                     isDark={isDark}
                     heading={folderName}
+                    loading={loading}
+                    error={error}
+                    page={page}
+                    totalNotes={totalNotes}
+                    onPageChange={setPage}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
                         handleNoteClick(note.id)

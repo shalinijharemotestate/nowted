@@ -2,14 +2,19 @@ import { useState } from 'react'
 import { FileText, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
-import api from '../api/NotesApi'
+import { deleteNote } from '../api/NotesApi'
 import type { Note } from '../types'
 
 type Props = {
     notes: Note[]
-    isDark: boolean  
+    isDark: boolean
     heading?: string
     showDelete?: boolean
+    loading?: boolean
+    error?: string | null
+    page: number
+    totalNotes: number
+    onPageChange: (page: number) => void
     onSelectNote: (note: Note) => void
     onNoteDeleted?: (deletedNote: Note) => void
 }
@@ -25,16 +30,13 @@ export function NotesColumn(props: Props) {
 
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [deletedNote, setDeletedNote] = useState<Note | null>(null)
-    const [page, setPage] = useState(1)
 
-    const perPage = 6
-    const totalPages = Math.ceil(notes.length / perPage)
-    const startIndex = (page - 1) * perPage
-    const currentNotes = notes.slice(startIndex, startIndex + perPage)
+    const totalPages = Math.ceil(props.totalNotes / 6)
 
     function handleDelete() {
         if (!deleteId || !deletedNote) return
-        api.delete('/notes/' + deleteId).then(function () {
+        deleteNote(deleteId).then(function (res) {
+            if (res.error) return
             setDeleteId(null)
             if (onNoteDeleted) onNoteDeleted(deletedNote)
             setDeletedNote(null)
@@ -51,9 +53,17 @@ export function NotesColumn(props: Props) {
                 <h2 className="text-lg font-semibold">{props.heading || 'Notes'}</h2>
             </div>
 
-            {notes.length === 0 ? (
+            {props.loading ? (
+                <div className="flex items-center justify-center h-full gap-2 text-gray-500">
+                    <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">Loading...</span>
+                </div>
+            ) : props.error ? (
+                <div className="flex items-center justify-center h-full text-red-400 text-sm px-4 text-center">
+                    {props.error}
+                </div>
+            ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-                
                     <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                         No notes in "{cleanHeading}"
                     </p>
@@ -61,10 +71,8 @@ export function NotesColumn(props: Props) {
                 </div>
             ) : (
                 <>
-                    <div className="flex-1 
-overflow-y-auto p-4 flex flex-col gap-3"
-                    >
-                        {currentNotes.map(function (note) {
+                    <div className="flex-1 p-4 flex flex-col gap-3">
+                        {notes.map(function (note) {
                             let isActive = currentNoteId === note.id
                             return (
                                 <div
@@ -117,21 +125,21 @@ overflow-y-auto p-4 flex flex-col gap-3"
                     {totalPages > 1 && (
                         <div className={`flex items-center justify-between px-4 py-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                             <button
-                                onClick={() => setPage(page - 1)}
-                                disabled={page === 1}
-                                className={`p-1 rounded transition-all ${page === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:text-pink-400'}`}
+                                onClick={() => props.onPageChange(props.page - 1)}
+                                disabled={props.page === 1}
+                                className={`p-1 rounded transition-all ${props.page === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:text-pink-400'}`}
                             >
                                 <ChevronLeft size={16} />
                             </button>
 
                             <span className="text-xs text-gray-400">
-                                {page} / {totalPages}
+                                {props.page} / {totalPages}
                             </span>
 
                             <button
-                                onClick={() => setPage(page + 1)}
-                                disabled={page === totalPages}
-                                className={`p-1 rounded transition-all ${page === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:text-pink-400'}`}
+                                onClick={() => props.onPageChange(props.page + 1)}
+                                disabled={props.page === totalPages}
+                                className={`p-1 rounded transition-all ${props.page === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:text-pink-400'}`}
                             >
                                 <ChevronRight size={16} />
                             </button>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api/NotesApi'
+import { getDeletedNotes, getNoteById, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import { RotateCcw } from 'lucide-react'
 import type { Note, NoteDetail } from '../types'
@@ -18,63 +18,72 @@ function TrashPage(props: Props) {
 
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetail | null>(null)
+    const [page, setPage] = useState(1)
+    const [totalNotes, setTotalNotes] = useState(0)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        loadDeletedNotes()
-    }, [])
-
-    useEffect(
-        () => {
-            if (noteId) {
-                api.get('/notes/' + noteId).then(function (res) {
-                    setOpenNote(res.data.note)
-                })
-            } else {
-                setOpenNote(null)
-            }
-        },
-        [noteId],
-    )
-
-    function loadDeletedNotes() {
-        api.get('/notes', {
-            params: { deleted: true },
-        }).then(function (res) {
-            setNotesList(res.data.notes)
+        setLoading(true)
+        getDeletedNotes(page).then(function (res) {
+            setLoading(false)
+            if (res.error) { setError(res.error); return }
+            setNotesList(res.data)
+            setTotalNotes(res.total)
         })
-    }
+    }, [page])
+
+    useEffect(() => {
+        if (noteId) {
+            getNoteById(noteId).then(function (res) {
+                if (!res.error) setOpenNote(res.data)
+            })
+        } else {
+            setOpenNote(null)
+        }
+    }, [noteId])
 
     function handleNoteClick(id: string) {
         navigate('/trash/' + id)
     }
 
     function handleRestoreNote(id: string) {
-        api.post('/notes/' + id + '/restore').then(function () {
+        restoreNote(id).then(function (res) {
+            if (res.error) return
             setOpenNote(null)
             navigate('/trash')
-            loadDeletedNotes()
+            getDeletedNotes(page).then(function (r) {
+                if (!r.error) {
+                    setNotesList(r.data)
+                    setTotalNotes(r.total)
+                }
+            })
         })
     }
 
     return (
         <div className="flex flex-1">
             <div className={`w-75 border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
-             <NotesColumn
-    notes={
-        searchQuery
-            ? notesList.filter(function (note) {
-                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-              })
-            : notesList
-    }
-    isDark={isDark}
-    heading="Trash"
-    showDelete={false}
-      
-    onSelectNote={function (note) {
-        handleNoteClick(note.id)
-    }}
-/>
+                <NotesColumn
+                    notes={
+                        searchQuery
+                            ? notesList.filter(function (note) {
+                                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
+                              })
+                            : notesList
+                    }
+                    isDark={isDark}
+                    heading="Trash"
+                    showDelete={false}
+                    loading={loading}
+                    error={error}
+                    page={page}
+                    totalNotes={totalNotes}
+                    onPageChange={setPage}
+                    onSelectNote={function (note) {
+                        handleNoteClick(note.id)
+                    }}
+                />
             </div>
 
             <div className="flex-1 flex items-center justify-center h-full">

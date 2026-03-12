@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import api from '../api/NotesApi'
+import { getFolders, createFolder, renameFolder, deleteFolder } from '../api/FolderApi'
+import { getRecentNotes, createNote } from '../api/NotesApi'
 import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Search, X, Trash } from 'lucide-react'
 import logo from '../assets/main-logo.svg'
 import ConfirmPopup from './ConfirmPopup'
@@ -36,14 +37,10 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
     const activeFolderId = pathParts[1] === 'folder' ? pathParts[2] : null
 
     const getData = async () => {
-        try {
-            const folderRes = await api.get('/folders')
-            const recentRes = await api.get('/notes/recent')
-            setFolders(folderRes.data.folders)
-            setRecents(recentRes.data.recentNotes)
-        } catch (err) {
-            console.log('Error fetching Sidebar data:', err)
-        }
+        const folderRes = await getFolders()
+        const recentRes = await getRecentNotes()
+        if (!folderRes.error) setFolders(folderRes.data)
+        if (!recentRes.error) setRecents(recentRes.data)
     }
 
     useEffect(() => {
@@ -64,7 +61,6 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
     const handleSearch = (val: string) => {
         setLocalSearch(val)
         if (timerRef.current) clearTimeout(timerRef.current)
-
         timerRef.current = setTimeout(() => {
             setSearchQuery(val)
         }, 300)
@@ -72,7 +68,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
 
     const handleAddFolder = async () => {
         if (!newFolderName.trim()) return
-        await api.post('/folders', { name: newFolderName })
+        await createFolder(newFolderName)
         setNewFolderName('')
         setShowAddBox(false)
         getData()
@@ -80,14 +76,14 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
 
     const handleRename = async (id: string) => {
         if (!editingName.trim()) return
-        await api.patch(`/folders/${id}`, { name: editingName })
+        await renameFolder(id, editingName)
         setEditingId(null)
         getData()
     }
 
     const handleDelete = async () => {
         if (!deleteTarget) return
-        await api.delete(`/folders/${deleteTarget}`)
+        await deleteFolder(deleteTarget)
         setDeleteTarget(null)
         getData()
         if (activeFolderId === deleteTarget) navigate('/')
@@ -130,13 +126,14 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
                 )}
 
                 <button
-                    onClick={() =>
-                        activeFolderId
-                            ? api
-                                  .post('/notes', { folderId: activeFolderId, title: 'New Note' })
-                                  .then((res) => navigate(`/folder/${activeFolderId}/${res.data.id}`))
-                            : alert('Select a folder first...')
-                    }
+                    onClick={async () => {
+                        if (!activeFolderId) { alert('Select a folder first...'); return }
+                        const res = await createNote(activeFolderId, 'New Note')
+                        if (!res.error && res.data) {
+                            navigate(`/folder/${activeFolderId}/${res.data.id}`)
+                            getData()
+                        }
+                    }}
                     className="w-full flex items-center justify-center gap-2 bg-pink-200 hover:bg-pink-300 text-gray-800 py-2 rounded-md mb-6 text-sm font-medium"
                 >
                     <Plus size={16} /> New Note

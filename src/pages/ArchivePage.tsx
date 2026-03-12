@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api/NotesApi'
+import { getArchivedNotes, getNoteById, updateNote, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
@@ -20,17 +20,25 @@ function ArchivePage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
+    const [page, setPage] = useState(1)
+    const [totalNotes, setTotalNotes] = useState(0)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        api.get('/notes', { params: { archived: true } }).then((response) => {
-            setNotesList(response.data.notes)
+        setLoading(true)
+        getArchivedNotes(page).then(function (res) {
+            setLoading(false)
+            if (res.error) { setError(res.error); return }
+            setNotesList(res.data)
+            setTotalNotes(res.total)
         })
-    }, [])
+    }, [page])
 
     useEffect(() => {
         if (noteId) {
-            api.get('/notes/' + noteId).then((response) => {
-                setOpenNote(response.data.note)
+            getNoteById(noteId).then(function (res) {
+                if (!res.error) setOpenNote(res.data)
             })
         } else {
             setOpenNote(null)
@@ -50,7 +58,7 @@ function ArchivePage(props: Props) {
     }
 
     function handleUnarchive(id: string) {
-        api.patch('/notes/' + id, { isArchived: false }).then(function () {
+        updateNote(id, { isArchived: false }).then(function () {
             setNotesList(notesList.filter((note) => note.id !== id))
             setOpenNote(null)
             navigate('/archived')
@@ -65,10 +73,14 @@ function ArchivePage(props: Props) {
     }
 
     function handleRestore(id: string) {
-        api.post('/notes/' + id + '/restore').then(function () {
+        restoreNote(id).then(function (res) {
+            if (res.error) return
             setRestoringNote(null)
-            api.get('/notes', { params: { archived: true } }).then(function (res) {
-                setNotesList(res.data.notes)
+            getArchivedNotes(page).then(function (r) {
+                if (!r.error) {
+                    setNotesList(r.data)
+                    setTotalNotes(r.total)
+                }
             })
         })
     }
@@ -86,6 +98,11 @@ function ArchivePage(props: Props) {
                     }
                     isDark={isDark}
                     heading="Archived"
+                    loading={loading}
+                    error={error}
+                    page={page}
+                    totalNotes={totalNotes}
+                    onPageChange={setPage}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
                         handleNoteClick(note.id)

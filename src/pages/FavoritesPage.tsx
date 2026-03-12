@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api/NotesApi'
+import { getFavoriteNotes, getNoteById, updateNote, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
@@ -20,17 +20,25 @@ function FavoritesPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
+    const [page, setPage] = useState(1)
+    const [totalNotes, setTotalNotes] = useState(0)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    useEffect(() =>{
-        api.get('/notes', { params: { favorite: true } }).then(function (response) {
-            setNotesList(response.data.notes)
+    useEffect(() => {
+        setLoading(true)
+        getFavoriteNotes(page).then(function (res) {
+            setLoading(false)
+            if (res.error) { setError(res.error); return }
+            setNotesList(res.data)
+            setTotalNotes(res.total)
         })
-    }, [])
+    }, [page])
 
-    useEffect( () =>{
+    useEffect(() => {
         if (noteId) {
-            api.get('/notes/' + noteId).then(function (response) {
-                setOpenNote(response.data.note)
+            getNoteById(noteId).then(function (res) {
+                if (!res.error) setOpenNote(res.data)
             })
         } else {
             setOpenNote(null)
@@ -50,7 +58,7 @@ function FavoritesPage(props: Props) {
     }
 
     function handleUnfavorite(id: string) {
-        api.patch('/notes/' + id, { isFavorite: false }).then(function () {
+        updateNote(id, { isFavorite: false }).then(function () {
             setNotesList(notesList.filter((note) => note.id !== id))
             setOpenNote(null)
             navigate('/favorites')
@@ -65,10 +73,14 @@ function FavoritesPage(props: Props) {
     }
 
     function handleRestore(id: string) {
-        api.post('/notes/' + id + '/restore').then(function () {
+        restoreNote(id).then(function (res) {
+            if (res.error) return
             setRestoringNote(null)
-            api.get('/notes', { params: { favorite: true } }).then(function (res) {
-                setNotesList(res.data.notes)
+            getFavoriteNotes(page).then(function (r) {
+                if (!r.error) {
+                    setNotesList(r.data)
+                    setTotalNotes(r.total)
+                }
             })
         })
     }
@@ -86,6 +98,11 @@ function FavoritesPage(props: Props) {
                     }
                     isDark={isDark}
                     heading="Favorites"
+                    loading={loading}
+                    error={error}
+                    page={page}
+                    totalNotes={totalNotes}
+                    onPageChange={setPage}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
                         handleNoteClick(note.id)

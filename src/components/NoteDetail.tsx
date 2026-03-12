@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreHorizontal, ChevronDown } from 'lucide-react'
-import api from '../api/NotesApi'
+import { updateNote, deleteNote } from '../api/NotesApi'
+import { getFolders } from '../api/FolderApi'
 import ConfirmPopup from './ConfirmPopup'
 import type { NoteDetail as NoteDetailType } from '../types'
 
@@ -40,8 +41,8 @@ function NoteDetail(props: Props) {
     }, [note])
 
     useEffect(function () {
-        api.get('/folders').then(function (res) {
-            setFolders(res.data.folders)
+        getFolders().then(function (res) {
+            if (!res.error) setFolders(res.data)
         })
     }, [])
 
@@ -58,7 +59,8 @@ function NoteDetail(props: Props) {
         setSaveStatus('saving')
         if (titleTimer.current) clearTimeout(titleTimer.current)
         titleTimer.current = setTimeout(function () {
-            api.patch('/notes/' + note.id, { title: val }).then(function () {
+            updateNote(note.id, { title: val }).then(function (res) {
+                if (res.error) return
                 showSaved()
                 if (props.onNoteUpdated) props.onNoteUpdated(note.id, { title: val })
             })
@@ -70,7 +72,8 @@ function NoteDetail(props: Props) {
         setSaveStatus('saving')
         if (contentTimer.current) clearTimeout(contentTimer.current)
         contentTimer.current = setTimeout(function () {
-            api.patch('/notes/' + note.id, { content: val }).then(function () {
+            updateNote(note.id, { content: val }).then(function (res) {
+                if (res.error) return
                 showSaved()
                 if (props.onNoteUpdated) props.onNoteUpdated(note.id, { preview: val.slice(0, 100) })
             })
@@ -79,7 +82,8 @@ function NoteDetail(props: Props) {
 
     function toggleFavorite() {
         let newVal = !isFavorite
-        api.patch('/notes/' + note.id, { isFavorite: newVal }).then(function () {
+        updateNote(note.id, { isFavorite: newVal }).then(function (res) {
+            if (res.error) return
             setIsFavorite(newVal)
             setShowMenu(false)
             if (!newVal && props.onUnfavorite) props.onUnfavorite()
@@ -88,7 +92,8 @@ function NoteDetail(props: Props) {
 
     function toggleArchive() {
         let newVal = !isArchived
-        api.patch('/notes/' + note.id, { isArchived: newVal }).then(function () {
+        updateNote(note.id, { isArchived: newVal }).then(function (res) {
+            if (res.error) return
             setIsArchived(newVal)
             setShowMenu(false)
             if (!newVal && props.onUnarchive) props.onUnarchive()
@@ -97,7 +102,8 @@ function NoteDetail(props: Props) {
     }
 
     function handleDelete() {
-        api.delete('/notes/' + note.id).then(function () {
+        deleteNote(note.id).then(function (res) {
+            if (res.error) return
             setShowDeleteConfirm(false)
             setShowMenu(false)
             navigate('/folder/' + note.folder.id)
@@ -105,7 +111,8 @@ function NoteDetail(props: Props) {
     }
 
     function moveToFolder(folderId: string) {
-        api.patch('/notes/' + note.id, { folderId: folderId }).then(function () {
+        updateNote(note.id, { folderId: folderId }).then(function (res) {
+            if (res.error) return
             setShowFolderDrop(false)
             navigate('/folder/' + folderId + '/' + note.id)
         })
@@ -208,7 +215,6 @@ function NoteDetail(props: Props) {
                                                 : darkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-50'
                                             }`}
                                     >
-                                        
                                         <span className="truncate">{f.name}</span>
                                         {isCurrent && <span className="ml-auto text-xs opacity-60">current</span>}
                                     </div>

@@ -12,6 +12,7 @@ export type Note = {
     isFavorite: boolean
     isArchived: boolean
     deletedAt: string | null
+  
 }
 
 export type NoteDetail = Note & {
