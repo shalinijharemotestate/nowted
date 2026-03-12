@@ -164,7 +164,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
         dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 
         [&::-webkit-scrollbar-thumb]:rounded-full"
             >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 sticky top-0 bg-white z-10 pt-1">
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Folders</p>
                     <FolderPlus
                         size={16}
