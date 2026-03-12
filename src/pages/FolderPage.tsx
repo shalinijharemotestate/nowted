@@ -47,19 +47,24 @@ function FolderPage(props: Props) {
         })
     }, [folderId])
 
-    useEffect(() => {
-        if (!folderId) return
-        const isFirstPage = page === 1
-        if (isFirstPage) setLoading(true)
-        else setLoadingMore(true)
-        getNotesByFolder(folderId, page).then(function (res) {
-            setLoading(false)
-            setLoadingMore(false)
-            if (res.error) { setError(res.error); toast.error('Failed to load notes'); return }
-            setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
-            setHasMore(res.data.length === 8)
-        })
-    }, [folderId, page])
+useEffect(() => {
+    if (!folderId) return
+    const isFirstPage = page === 1
+    if (isFirstPage) setLoading(true)
+    else setLoadingMore(true)
+    getNotesByFolder(folderId, page, searchQuery).then(function (res) {  
+        setLoading(false)
+        setLoadingMore(false)
+        if (res.error) { setError(res.error); toast.error('Failed to load notes'); return }
+        setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
+        setHasMore(res.data.length === 8)
+    })
+}, [folderId, page, searchQuery])  
+useEffect(() => {
+    setNotesList([])
+    setPage(1)
+    setHasMore(true)
+}, [searchQuery])
 
     useEffect(() => {
         if (!noteId) { setOpenNote(null); return }
@@ -103,13 +108,7 @@ function FolderPage(props: Props) {
         <div className="flex flex-1">
             <div className={`w-75 border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
                 <NotesColumn
-                    notes={
-                        searchQuery
-                            ? notesList.filter(function (note) {
-                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                            })
-                            : notesList
-                    }
+                   notes={notesList}
                     isDark={isDark}
                     heading={folderName}
                     loading={loading}

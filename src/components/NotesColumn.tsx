@@ -68,7 +68,7 @@ export function NotesColumn(props: Props) {
 
     return (
         <div className="flex flex-col h-full">
-            <div className={`p-5 border-b flex-shrink-0 ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
+            <div className={`p-5 border-b shrink-0 ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
                 <h2 className="text-lg font-semibold">{props.heading || 'Notes'}</h2>
             </div>
 
