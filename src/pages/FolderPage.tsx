@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getNotesByFolder, getNoteById, restoreNote } from '../api/NotesApi'
-import { getFolders } from '../api/folderApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 
 type Props = {
     isDark: boolean
     searchQuery: string
+    folderName: string
 }
 
 function FolderPage(props: Props) {
@@ -23,7 +23,6 @@ function FolderPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
-    const [folderName, setFolderName] = useState('')
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
@@ -38,14 +37,7 @@ function FolderPage(props: Props) {
         setError(null)
     }, [folderId])
 
-    useEffect(() => {
-        if (!folderId) return
-        getFolders().then(function (res) {
-            if (res.error) { toast.error('Failed to load folders'); return }
-            const found = res.data.find((f: any) => f.id === folderId)
-            if (found) setFolderName(found.name)
-        })
-    }, [folderId])
+    
 
 useEffect(() => {
     if (!folderId) return
@@ -59,7 +51,7 @@ useEffect(() => {
         setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
         setHasMore(res.data.length === 8)
     })
-}, [folderId, page, searchQuery])  
+}, [folderId, page, searchQuery , noteId])  
 useEffect(() => {
     setNotesList([])
     setPage(1)
@@ -110,7 +102,7 @@ useEffect(() => {
                 <NotesColumn
                    notes={notesList}
                     isDark={isDark}
-                    heading={folderName}
+                   heading={props.folderName}
                     loading={loading}
                     loadingMore={loadingMore}
                     error={error}

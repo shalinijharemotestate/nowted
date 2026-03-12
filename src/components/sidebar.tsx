@@ -6,7 +6,7 @@ import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Sear
 import logo from '../assets/main-logo.svg'
 import ConfirmPopup from './ConfirmPopup'
 import type { Folder as FolderType, Note } from '../types'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 
 
 type SidebarProps = {
@@ -14,9 +14,11 @@ type SidebarProps = {
     setIsDark: (val: boolean) => void
     searchQuery: string
     setSearchQuery: (val: string) => void
+    setActiveFolderName: (name: string) => void
+    
 }
 
-export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
+export function Sidebar({ isDark, setIsDark, setSearchQuery, setActiveFolderName }: SidebarProps) {
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -84,6 +86,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
         const res = await renameFolder(id, editingName)
         if (res.error) { toast.error('Failed to rename folder'); return }
         setEditingId(null)
+        setActiveFolderName(editingName)
         getData()
     }
 
@@ -134,7 +137,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
 
                 <button
                     onClick={async () => {
-                        if (!activeFolderId) { alert('Select a folder first...'); return }
+                        if (!activeFolderId) { toast.error('Select a folder first...'); return }
                         const res = await createNote(activeFolderId, 'New Note')
                         if (res.error) { toast.error('Failed to create note'); return }
                         if (res.data) {
@@ -203,7 +206,11 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
                                 onMouseEnter={() => setHoveredFolder(f.id)}
                                 onMouseLeave={() => setHoveredFolder(null)}
                                 className={`group flex items-center gap-2 p-2 rounded cursor-pointer ${isActive ? (isDark ? 'bg-zinc-800 text-pink-400' : 'bg-white shadow-sm text-pink-500') : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                                onClick={() => editingId !== f.id && navigate(`/folder/${f.id}`)}
+                                onClick={() => {
+    if (editingId === f.id) return
+    navigate(`/folder/${f.id}`)
+    setActiveFolderName(f.name)
+}}
                             >
                                 <Folder size={16} className="shrink-0" />
 

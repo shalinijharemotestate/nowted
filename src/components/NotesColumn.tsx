@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import ConfirmPopup from './ConfirmPopup'
 import { deleteNote } from '../api/NotesApi'
 import type { Note } from '../types'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 
 
 type Props = {

@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({ baseURL: 'https://nowted-server.remotestate.com' })
+
 export async function getNotesByFolder(folderId: string, page: number = 1, search: string = '') {
     try {
         const res = await api.get('/notes', { params: { folderId, page, limit: 8, search } })
@@ -10,27 +11,27 @@ export async function getNotesByFolder(folderId: string, page: number = 1, searc
     }
 }
 
-export async function getFavoriteNotes(page: number = 1) {
+export async function getFavoriteNotes(page: number = 1, search: string = '') {
     try {
-        const res = await api.get('/notes', { params: { favorite: true, page, limit: 8 } })
+        const res = await api.get('/notes', { params: { favorite: true, page, limit: 8, search } })
         return { data: res.data.notes, total: res.data.total, error: null }
     } catch (err) {
         return { data: [], total: 0, error: 'Failed to load favorites' }
     }
 }
 
-export async function getArchivedNotes(page: number = 1) {
+export async function getArchivedNotes(page: number = 1, search: string = '') {
     try {
-        const res = await api.get('/notes', { params: { archived: true, page, limit: 8 } })
+        const res = await api.get('/notes', { params: { archived: true, page, limit: 8, search } })
         return { data: res.data.notes, total: res.data.total, error: null }
     } catch (err) {
         return { data: [], total: 0, error: 'Failed to load archived notes' }
     }
 }
 
-export async function getDeletedNotes(page: number = 1) {
+export async function getDeletedNotes(page: number = 1, search: string = '') {
     try {
-        const res = await api.get('/notes', { params: { deleted: true, page, limit: 8} })
+        const res = await api.get('/notes', { params: { deleted: true, page, limit: 8, search } })
         return { data: res.data.notes, total: res.data.total, error: null }
     } catch (err) {
         return { data: [], total: 0, error: 'Failed to load trash' }

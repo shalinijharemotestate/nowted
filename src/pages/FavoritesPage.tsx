@@ -5,7 +5,7 @@ import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 
 type Props = {
     isDark: boolean
@@ -31,14 +31,14 @@ function FavoritesPage(props: Props) {
         const isFirstPage = page === 1
         if (isFirstPage) setLoading(true)
         else setLoadingMore(true)
-        getFavoriteNotes(page).then(function (res) {
+        getFavoriteNotes(page,searchQuery).then(function (res) {
             setLoading(false)
             setLoadingMore(false)
             if (res.error) { setError(res.error); toast.error('Failed to load favorites'); return }
             setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
             setHasMore(res.data.length === 8)
         })
-    }, [page])
+    }, [page, searchQuery])
 
     useEffect(() => {
         if (noteId) {
@@ -94,13 +94,7 @@ function FavoritesPage(props: Props) {
         <div className="flex flex-1">
             <div className={`w-75 border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
                 <NotesColumn
-                    notes={
-                        searchQuery
-                            ? notesList.filter(function (note) {
-                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                            })
-                            : notesList
-                    }
+                    notes={notesList}
                     isDark={isDark}
                     heading="Favorites"
                     loading={loading}

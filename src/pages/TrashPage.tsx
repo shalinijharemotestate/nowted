@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getDeletedNotes, getNoteById, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import { RotateCcw } from 'lucide-react'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 import type { Note, NoteDetail } from '../types'
 
 type Props = {
@@ -29,14 +29,14 @@ function TrashPage(props: Props) {
         const isFirstPage = page === 1
         if (isFirstPage) setLoading(true)
         else setLoadingMore(true)
-        getDeletedNotes(page).then(function (res) {
+        getDeletedNotes(page, searchQuery).then(function (res) {
             setLoading(false)
             setLoadingMore(false)
             if (res.error) { setError(res.error); toast.error('Failed to load trash'); return }
             setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
             setHasMore(res.data.length === 8)
         })
-    }, [page])
+    }, [page, searchQuery])
 
     useEffect(() => {
         if (noteId) {
@@ -69,13 +69,7 @@ function TrashPage(props: Props) {
         <div className="flex flex-1">
             <div className={`w-75 border-r ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
                 <NotesColumn
-                    notes={
-                        searchQuery
-                            ? notesList.filter(function (note) {
-                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                            })
-                            : notesList
-                    }
+                   notes ={notesList}
                     isDark={isDark}
                     heading="Trash"
                     showDelete={false}

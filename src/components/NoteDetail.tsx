@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate,  } from 'react-router-dom'
 import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { updateNote, deleteNote } from '../api/NotesApi'
 import { getFolders } from '../api/folderApi'
 import ConfirmPopup from './ConfirmPopup'
-import { toast } from '../toast/toast'
+import toast from 'react-hot-toast'
 import type { NoteDetail as NoteDetailType } from '../types'
 import type { Note } from '../types'
 
