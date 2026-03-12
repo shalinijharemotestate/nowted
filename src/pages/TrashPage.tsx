@@ -12,8 +12,8 @@ type Props = {
 }
 
 function TrashPage(props: Props) {
-    let isDark = props.isDark
-    let searchQuery = props.searchQuery
+    const isDark = props.isDark
+    const searchQuery = props.searchQuery
     const { noteId } = useParams()
     const navigate = useNavigate()
 

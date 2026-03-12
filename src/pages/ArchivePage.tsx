@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getArchivedNotes, getNoteById, updateNote, restoreNote } from '../api/NotesApi'
+import { getArchivedNotes, getNoteById,  restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
@@ -63,15 +63,12 @@ function ArchivePage(props: Props) {
             })
         })
     }
-
-    function handleUnarchive(id: string) {
-        updateNote(id, { isArchived: false }).then(function (res) {
-            if (res.error) { toast.error('Failed to unarchive note'); return }
-            setNotesList(notesList.filter((note) => note.id !== id))
-            setOpenNote(null)
-            navigate('/archived')
-        })
-    }
+function handleUnarchive(id: string) {
+    setNotesList(notesList.filter((note) => note.id !== id))
+    setOpenNote(null)
+    navigate('/archived')
+    toast.success('Note unarchived')
+}
 
     function handleNoteDeleted(deletedNote: Note) {
         setNotesList(prev => prev.filter(n => n.id !== deletedNote.id))

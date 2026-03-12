@@ -19,8 +19,8 @@ type Props = {
 }
 
 function NoteDetail(props: Props) {
-    let note = props.note
-    let darkMode = props.darkMode
+    const note = props.note
+    const darkMode = props.darkMode
     const showFolderMove = props.showFolderMove ?? true
     const navigate = useNavigate()
     const location = useLocation()
@@ -97,6 +97,7 @@ function NoteDetail(props: Props) {
             if (res.error) { toast.error('Failed to update favorite'); return }
             setIsFavorite(newVal)
             setShowMenu(false)
+            toast.success(newVal ? 'Added to favorites' : 'Removed from favorites')
             if (!newVal && props.onUnfavorite) props.onUnfavorite()
         })
     }
@@ -107,6 +108,7 @@ function NoteDetail(props: Props) {
             if (res.error) { toast.error('Failed to update archive'); return }
             setIsArchived(newVal)
             setShowMenu(false)
+            toast.success(newVal ? 'Note archived' : 'Note unarchived')
             if (!newVal && props.onUnarchive) props.onUnarchive()
             if (newVal) navigate('/folder/' + note.folder.id)
         })
