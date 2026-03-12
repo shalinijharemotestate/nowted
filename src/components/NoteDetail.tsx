@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { updateNote, deleteNote } from '../api/NotesApi'
 import { getFolders } from '../api/folderApi'
@@ -23,6 +23,10 @@ function NoteDetail(props: Props) {
     let darkMode = props.darkMode
     const showFolderMove = props.showFolderMove ?? true
     const navigate = useNavigate()
+    const location = useLocation()
+
+    const isFavorites = location.pathname.startsWith('/favorites')
+    const isArchive = location.pathname.startsWith('/archived')
 
     const [title, setTitle] = useState(note.title)
     const [content, setContent] = useState(note.content)
@@ -113,13 +117,17 @@ function NoteDetail(props: Props) {
             if (res.error) { toast.error('Failed to delete note'); return }
             setShowDeleteConfirm(false)
             setShowMenu(false)
-            // if parent handles delete (FolderPage), use callback for RestoreNote
+          
             if (props.onNoteDeleted) {
                 props.onNoteDeleted(note)
-            } else {
+            } else if (isFavorites){
+                navigate('/favorites/')
+            } else if (isArchive) {
+                navigate('/archived/' )
+            } else if (note.folder) {
                 navigate('/folder/' + note.folder.id)
             }
-        })
+    })
     }
 
     function moveToFolder(folderId: string) {

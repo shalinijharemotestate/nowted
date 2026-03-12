@@ -77,8 +77,8 @@ function FavoritesPage(props: Props) {
         setNotesList(prev => prev.filter(n => n.id !== deletedNote.id))
         setOpenNote(null)
         setRestoringNote(deletedNote)
-        navigate('/favorites')
-    }
+        navigate('/favorites/')
+    }   
 
     function handleRestore(id: string) {
         restoreNote(id).then(function (res) {

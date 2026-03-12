@@ -6,6 +6,7 @@ import { deleteNote } from '../api/NotesApi'
 import type { Note } from '../types'
 import { toast } from '../toast/toast'
 
+
 type Props = {
     notes: Note[]
     isDark: boolean
@@ -63,9 +64,7 @@ export function NotesColumn(props: Props) {
         })
     }
 
-    const cleanHeading = props.heading
-        ? props.heading.replace(/[^a-zA-Z0-9 ]/g, '').trim() || 'this folder'
-        : 'this folder'
+   
 
     return (
         <div className="flex flex-col h-full">
@@ -84,9 +83,7 @@ export function NotesColumn(props: Props) {
                 </div>
             ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-                    <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        No notes in "{cleanHeading}"
-                    </p>
+                   
                     <p className="text-xs text-gray-500">Click "New Note" to add one</p>
                 </div>
             ) : (
