@@ -5,6 +5,7 @@ import { getRecentNotes, createNote } from '../api/NotesApi'
 import { FileText, Folder, Star, Trash2, Archive, Plus, FolderPlus, Pencil, Search, X, Trash } from 'lucide-react'
 import logo from '../assets/main-logo.svg'
 import ConfirmPopup from './ConfirmPopup'
+import { toast } from './toast'
 import type { Folder as FolderType, Note } from '../types'
 
 type SidebarProps = {
@@ -39,8 +40,10 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
     const getData = async () => {
         const folderRes = await getFolders()
         const recentRes = await getRecentNotes()
-        if (!folderRes.error) setFolders(folderRes.data)
-        if (!recentRes.error) setRecents(recentRes.data)
+        if (folderRes.error) toast.error('Failed to load folders')
+        else setFolders(folderRes.data)
+        if (recentRes.error) toast.error('Failed to load recents')
+        else setRecents(recentRes.data)
     }
 
     useEffect(() => {
@@ -68,7 +71,8 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
 
     const handleAddFolder = async () => {
         if (!newFolderName.trim()) return
-        await createFolder(newFolderName)
+        const res = await createFolder(newFolderName)
+        if (res.error) { toast.error('Failed to create folder'); return }
         setNewFolderName('')
         setShowAddBox(false)
         getData()
@@ -76,14 +80,16 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
 
     const handleRename = async (id: string) => {
         if (!editingName.trim()) return
-        await renameFolder(id, editingName)
+        const res = await renameFolder(id, editingName)
+        if (res.error) { toast.error('Failed to rename folder'); return }
         setEditingId(null)
         getData()
     }
 
     const handleDelete = async () => {
         if (!deleteTarget) return
-        await deleteFolder(deleteTarget)
+        const res = await deleteFolder(deleteTarget)
+        if (res.error) { toast.error('Failed to delete folder'); return }
         setDeleteTarget(null)
         getData()
         if (activeFolderId === deleteTarget) navigate('/')
@@ -129,7 +135,8 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
                     onClick={async () => {
                         if (!activeFolderId) { alert('Select a folder first...'); return }
                         const res = await createNote(activeFolderId, 'New Note')
-                        if (!res.error && res.data) {
+                        if (res.error) { toast.error('Failed to create note'); return }
+                        if (res.data) {
                             navigate(`/folder/${activeFolderId}/${res.data.id}`)
                             getData()
                         }
@@ -164,7 +171,7 @@ export function Sidebar({ isDark, setIsDark, setSearchQuery }: SidebarProps) {
         dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 
         [&::-webkit-scrollbar-thumb]:rounded-full"
             >
-                <div className="flex items-center justify-between mb-3 sticky top-0 bg-white z-10 pt-1">
+                <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Folders</p>
                     <FolderPlus
                         size={16}

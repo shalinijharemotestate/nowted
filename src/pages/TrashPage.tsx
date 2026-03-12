@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getDeletedNotes, getNoteById, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import { RotateCcw } from 'lucide-react'
+import { toast } from '../components/toast'
 import type { Note, NoteDetail } from '../types'
 
 type Props = {
@@ -19,45 +20,48 @@ function TrashPage(props: Props) {
     const [notesList, setNotesList] = useState<Note[]>([])
     const [openNote, setOpenNote] = useState<NoteDetail | null>(null)
     const [page, setPage] = useState(1)
-    const [totalNotes, setTotalNotes] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        setLoading(true)
+        const isFirstPage = page === 1
+        if (isFirstPage) setLoading(true)
+        else setLoadingMore(true)
         getDeletedNotes(page).then(function (res) {
             setLoading(false)
-            if (res.error) { setError(res.error); return }
-            setNotesList(res.data)
-            setTotalNotes(res.total)
+            setLoadingMore(false)
+            if (res.error) { setError(res.error); toast.error('Failed to load trash'); return }
+            setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
+            setHasMore(res.data.length === 8)
         })
     }, [page])
 
     useEffect(() => {
         if (noteId) {
             getNoteById(noteId).then(function (res) {
-                if (!res.error) setOpenNote(res.data)
+                if (res.error) { toast.error('Failed to open note'); return }
+                setOpenNote(res.data)
             })
         } else {
             setOpenNote(null)
         }
     }, [noteId])
 
-    function handleNoteClick(id: string) {
-        navigate('/trash/' + id)
-    }
+    const handleLoadMore = useCallback(() => {
+        if (!hasMore || loadingMore) return
+        setPage(prev => prev + 1)
+    }, [hasMore, loadingMore])
 
     function handleRestoreNote(id: string) {
         restoreNote(id).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to restore note'); return }
             setOpenNote(null)
             navigate('/trash')
-            getDeletedNotes(page).then(function (r) {
-                if (!r.error) {
-                    setNotesList(r.data)
-                    setTotalNotes(r.total)
-                }
-            })
+            setNotesList([])
+            setPage(1)
+            setHasMore(true)
         })
     }
 
@@ -68,20 +72,20 @@ function TrashPage(props: Props) {
                     notes={
                         searchQuery
                             ? notesList.filter(function (note) {
-                                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                              })
+                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
+                            })
                             : notesList
                     }
                     isDark={isDark}
                     heading="Trash"
                     showDelete={false}
                     loading={loading}
+                    loadingMore={loadingMore}
                     error={error}
-                    page={page}
-                    totalNotes={totalNotes}
-                    onPageChange={setPage}
+                    hasMore={hasMore}
+                    onLoadMore={handleLoadMore}
                     onSelectNote={function (note) {
-                        handleNoteClick(note.id)
+                        navigate('/trash/' + note.id)
                     }}
                 />
             </div>

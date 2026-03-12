@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getNotesByFolder, getNoteById, restoreNote } from '../api/NotesApi'
 import { getFolders } from '../api/folderApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
+import { toast } from '../components/toast'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
 
 type Props = {
@@ -24,48 +25,54 @@ function FolderPage(props: Props) {
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
     const [folderName, setFolderName] = useState('')
     const [page, setPage] = useState(1)
-    const [totalNotes, setTotalNotes] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         if (!folderId) return
+        setNotesList([])
+        setPage(1)
+        setHasMore(true)
+        setError(null)
+    }, [folderId])
+
+    useEffect(() => {
+        if (!folderId) return
         getFolders().then(function (res) {
-            if (res.error) return
-            let found = res.data.find((f: any) => f.id === folderId)
+            if (res.error) { toast.error('Failed to load folders'); return }
+            const found = res.data.find((f: any) => f.id === folderId)
             if (found) setFolderName(found.name)
         })
     }, [folderId])
 
     useEffect(() => {
         if (!folderId) return
-        setLoading(true)
+        const isFirstPage = page === 1
+        if (isFirstPage) setLoading(true)
+        else setLoadingMore(true)
         getNotesByFolder(folderId, page).then(function (res) {
             setLoading(false)
-            if (res.error) { setError(res.error); return }
-            setNotesList(res.data)
-            setTotalNotes(res.total)
+            setLoadingMore(false)
+            if (res.error) { setError(res.error); toast.error('Failed to load notes'); return }
+            setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
+            setHasMore(res.data.length === 8)
         })
-    }, [folderId, noteId, page])
+    }, [folderId, page])
 
     useEffect(() => {
-        if (noteId) {
-            getNoteById(noteId).then(function (res) {
-                if (!res.error) setOpenNote(res.data)
-            })
-        } else {
-            setOpenNote(null)
-        }
+        if (!noteId) { setOpenNote(null); return }
+        getNoteById(noteId).then(function (res) {
+            if (res.error) { toast.error('Failed to open note'); return }
+            setOpenNote(res.data)
+        })
     }, [noteId])
 
-    // reset page when folder changes
-    useEffect(() => {
-        setPage(1)
-    }, [folderId])
-
-    function handleNoteClick(id: string) {
-        navigate('/folder/' + folderId + '/' + id)
-    }
+    const handleLoadMore = useCallback(() => {
+        if (!hasMore || loadingMore) return
+        setPage(prev => prev + 1)
+    }, [hasMore, loadingMore])
 
     function handleNoteUpdated(id: string, updates: { title?: string; preview?: string }) {
         setNotesList(function (prev) {
@@ -84,14 +91,11 @@ function FolderPage(props: Props) {
 
     function handleRestore(id: string) {
         restoreNote(id).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to restore note'); return }
             setRestoringNote(null)
-            getNotesByFolder(folderId!, page).then(function (r) {
-                if (!r.error) {
-                    setNotesList(r.data)
-                    setTotalNotes(r.total)
-                }
-            })
+            setNotesList([])
+            setPage(1)
+            setHasMore(true)
         })
     }
 
@@ -102,20 +106,20 @@ function FolderPage(props: Props) {
                     notes={
                         searchQuery
                             ? notesList.filter(function (note) {
-                                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                              })
+                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
+                            })
                             : notesList
                     }
                     isDark={isDark}
                     heading={folderName}
                     loading={loading}
+                    loadingMore={loadingMore}
                     error={error}
-                    page={page}
-                    totalNotes={totalNotes}
-                    onPageChange={setPage}
+                    hasMore={hasMore}
+                    onLoadMore={handleLoadMore}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
-                        handleNoteClick(note.id)
+                        navigate(`/folder/${folderId}/${note.id}`)
                     }}
                     onNoteDeleted={handleNoteDeleted}
                 />

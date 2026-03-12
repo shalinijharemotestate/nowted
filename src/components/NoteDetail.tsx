@@ -4,6 +4,7 @@ import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { updateNote, deleteNote } from '../api/NotesApi'
 import { getFolders } from '../api/folderApi'
 import ConfirmPopup from './ConfirmPopup'
+import { toast } from './toast'
 import type { NoteDetail as NoteDetailType } from '../types'
 
 type Props = {
@@ -42,7 +43,8 @@ function NoteDetail(props: Props) {
 
     useEffect(function () {
         getFolders().then(function (res) {
-            if (!res.error) setFolders(res.data)
+            if (res.error) { toast.error('Failed to load folders'); return }
+            setFolders(res.data)
         })
     }, [])
 
@@ -60,7 +62,7 @@ function NoteDetail(props: Props) {
         if (titleTimer.current) clearTimeout(titleTimer.current)
         titleTimer.current = setTimeout(function () {
             updateNote(note.id, { title: val }).then(function (res) {
-                if (res.error) return
+                if (res.error) { toast.error('Failed to save title'); return }
                 showSaved()
                 if (props.onNoteUpdated) props.onNoteUpdated(note.id, { title: val })
             })
@@ -73,7 +75,7 @@ function NoteDetail(props: Props) {
         if (contentTimer.current) clearTimeout(contentTimer.current)
         contentTimer.current = setTimeout(function () {
             updateNote(note.id, { content: val }).then(function (res) {
-                if (res.error) return
+                if (res.error) { toast.error('Failed to save content'); return }
                 showSaved()
                 if (props.onNoteUpdated) props.onNoteUpdated(note.id, { preview: val.slice(0, 100) })
             })
@@ -83,7 +85,7 @@ function NoteDetail(props: Props) {
     function toggleFavorite() {
         let newVal = !isFavorite
         updateNote(note.id, { isFavorite: newVal }).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to update favorite'); return }
             setIsFavorite(newVal)
             setShowMenu(false)
             if (!newVal && props.onUnfavorite) props.onUnfavorite()
@@ -93,7 +95,7 @@ function NoteDetail(props: Props) {
     function toggleArchive() {
         let newVal = !isArchived
         updateNote(note.id, { isArchived: newVal }).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to update archive'); return }
             setIsArchived(newVal)
             setShowMenu(false)
             if (!newVal && props.onUnarchive) props.onUnarchive()
@@ -103,7 +105,7 @@ function NoteDetail(props: Props) {
 
     function handleDelete() {
         deleteNote(note.id).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to delete note'); return }
             setShowDeleteConfirm(false)
             setShowMenu(false)
             navigate('/folder/' + note.folder.id)
@@ -112,7 +114,7 @@ function NoteDetail(props: Props) {
 
     function moveToFolder(folderId: string) {
         updateNote(note.id, { folderId: folderId }).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to move note'); return }
             setShowFolderDrop(false)
             navigate('/folder/' + folderId + '/' + note.id)
         })
@@ -203,10 +205,7 @@ function NoteDetail(props: Props) {
                                     <div
                                         key={f.id}
                                         onClick={function () {
-                                            if (isCurrent) {
-                                                setShowFolderDrop(false)
-                                                return
-                                            }
+                                            if (isCurrent) { setShowFolderDrop(false); return }
                                             moveToFolder(f.id)
                                         }}
                                         className={`px-4 py-2.5 text-sm cursor-pointer flex items-center gap-2

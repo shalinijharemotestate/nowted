@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getArchivedNotes, getNoteById, updateNote, restoreNote } from '../api/NotesApi'
 import { NotesColumn } from '../components/NotesColumn'
 import NoteDetail from '../components/NoteDetail'
 import RestoreNote from '../components/RestoreNote'
+import { toast } from '../components/toast'
 import type { Note, NoteDetail as NoteDetailType } from '../types'
 
 type Props = {
@@ -21,33 +22,39 @@ function ArchivePage(props: Props) {
     const [openNote, setOpenNote] = useState<NoteDetailType | null>(null)
     const [restoringNote, setRestoringNote] = useState<Note | null>(null)
     const [page, setPage] = useState(1)
-    const [totalNotes, setTotalNotes] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        setLoading(true)
+        const isFirstPage = page === 1
+        if (isFirstPage) setLoading(true)
+        else setLoadingMore(true)
         getArchivedNotes(page).then(function (res) {
             setLoading(false)
-            if (res.error) { setError(res.error); return }
-            setNotesList(res.data)
-            setTotalNotes(res.total)
+            setLoadingMore(false)
+            if (res.error) { setError(res.error); toast.error('Failed to load archived notes'); return }
+            setNotesList(prev => isFirstPage ? res.data : [...prev, ...res.data])
+            setHasMore(res.data.length === 8)
         })
     }, [page])
 
     useEffect(() => {
         if (noteId) {
             getNoteById(noteId).then(function (res) {
-                if (!res.error) setOpenNote(res.data)
+                if (res.error) { toast.error('Failed to open note'); return }
+                setOpenNote(res.data)
             })
         } else {
             setOpenNote(null)
         }
     }, [noteId])
 
-    function handleNoteClick(id: string) {
-        navigate('/archived/' + id)
-    }
+    const handleLoadMore = useCallback(() => {
+        if (!hasMore || loadingMore) return
+        setPage(prev => prev + 1)
+    }, [hasMore, loadingMore])
 
     function handleNoteUpdated(id: string, updates: { title?: string; preview?: string }) {
         setNotesList(function (prev) {
@@ -58,7 +65,8 @@ function ArchivePage(props: Props) {
     }
 
     function handleUnarchive(id: string) {
-        updateNote(id, { isArchived: false }).then(function () {
+        updateNote(id, { isArchived: false }).then(function (res) {
+            if (res.error) { toast.error('Failed to unarchive note'); return }
             setNotesList(notesList.filter((note) => note.id !== id))
             setOpenNote(null)
             navigate('/archived')
@@ -74,14 +82,11 @@ function ArchivePage(props: Props) {
 
     function handleRestore(id: string) {
         restoreNote(id).then(function (res) {
-            if (res.error) return
+            if (res.error) { toast.error('Failed to restore note'); return }
             setRestoringNote(null)
-            getArchivedNotes(page).then(function (r) {
-                if (!r.error) {
-                    setNotesList(r.data)
-                    setTotalNotes(r.total)
-                }
-            })
+            setNotesList([])
+            setPage(1)
+            setHasMore(true)
         })
     }
 
@@ -92,20 +97,20 @@ function ArchivePage(props: Props) {
                     notes={
                         searchQuery
                             ? notesList.filter(function (note) {
-                                  return note.title.toLowerCase().includes(searchQuery.toLowerCase())
-                              })
+                                return note.title.toLowerCase().includes(searchQuery.toLowerCase())
+                            })
                             : notesList
                     }
                     isDark={isDark}
                     heading="Archived"
                     loading={loading}
+                    loadingMore={loadingMore}
                     error={error}
-                    page={page}
-                    totalNotes={totalNotes}
-                    onPageChange={setPage}
+                    hasMore={hasMore}
+                    onLoadMore={handleLoadMore}
                     onSelectNote={function (note) {
                         setRestoringNote(null)
-                        handleNoteClick(note.id)
+                        navigate('/archived/' + note.id)
                     }}
                     onNoteDeleted={handleNoteDeleted}
                 />
