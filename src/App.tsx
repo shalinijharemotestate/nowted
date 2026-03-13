@@ -35,11 +35,11 @@ function App() {
                     <Route path="/" element={<Navigate to="/folder" />} />
                     <Route
     path="/folder/:folderId"
-    element={<FolderPage isDark={isDark} searchQuery={searchQuery} folderName={activeFolderName} />}
+    element={<FolderPage isDark={isDark} searchQuery={searchQuery} folderName={activeFolderName} setActiveFolderName={setActiveFolderName} />}
 />
 <Route
     path="/folder/:folderId/:noteId"
-    element={<FolderPage isDark={isDark} searchQuery={searchQuery} folderName={activeFolderName} />}
+    element={<FolderPage isDark={isDark} searchQuery={searchQuery} folderName={activeFolderName} setActiveFolderName={setActiveFolderName}/>}
 />
                     <Route path="/trash" element={<TrashPage isDark={isDark} searchQuery={searchQuery} />} />
                     <Route path="/trash/:noteId" element={<TrashPage isDark={isDark} searchQuery={searchQuery} />} />

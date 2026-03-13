@@ -16,6 +16,7 @@ type Props = {
     onNoteUpdated?: (id: string, updates: { title?: string; preview?: string }) => void
     onNoteDeleted?: (deletedNote: Note) => void
     showFolderMove?: boolean
+    onFolderChange?: (name: string) => void
 }
 
 function NoteDetail(props: Props) {
@@ -55,7 +56,7 @@ function NoteDetail(props: Props) {
             if (res.error) { toast.error('Failed to load folders'); return }
             setFolders(res.data)
         })
-    }, [])
+    }, [note])
 
     function showSaved() {
         setSaveStatus('saved')
@@ -132,14 +133,15 @@ function NoteDetail(props: Props) {
     })
     }
 
-    function moveToFolder(folderId: string) {
-        updateNote(note.id, { folderId: folderId }).then(function (res) {
-            if (res.error) { toast.error('Failed to move note'); return }
-            setShowFolderDrop(false)
-            navigate('/folder/' + folderId + '/' + note.id)
-        })
-    }
-
+  function moveToFolder(folderId: string) {
+    updateNote(note.id, { folderId: folderId }).then(function (res) {
+        if (res.error) { toast.error('Failed to move note'); return }
+        setShowFolderDrop(false)
+        const newFolder = folders.find(f => f.id === folderId)
+        if (newFolder && props.onFolderChange) props.onFolderChange(newFolder.name)
+        navigate('/folder/' + folderId + '/' + note.id)
+    })
+}
     return (
         <div className="p-8 h-full overflow-y-auto relative">
             <div className="flex items-center justify-between mb-6">

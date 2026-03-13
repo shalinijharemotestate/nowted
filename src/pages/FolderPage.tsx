@@ -11,6 +11,7 @@ type Props = {
     isDark: boolean
     searchQuery: string
     folderName: string
+    setActiveFolderName: (name: string) => void
 }
 
 function FolderPage(props: Props) {
@@ -35,7 +36,7 @@ function FolderPage(props: Props) {
         setPage(1)
         setHasMore(true)
         setError(null)
-    }, [folderId])
+    }, [folderId , noteId])
 
     
 
@@ -64,7 +65,7 @@ useEffect(() => {
             if (res.error) { toast.error('Failed to open note'); return }
             setOpenNote(res.data)
         })
-    }, [noteId])
+    }, [noteId , props.folderName])
 
     const handleLoadMore = useCallback(() => {
         if (!hasMore || loadingMore) return
@@ -128,6 +129,7 @@ useEffect(() => {
                         darkMode={isDark}
                         onNoteUpdated={handleNoteUpdated}
                         onNoteDeleted={handleNoteDeleted}
+                        onFolderChange={props.setActiveFolderName}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
